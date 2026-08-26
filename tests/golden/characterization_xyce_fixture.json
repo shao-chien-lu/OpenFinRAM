@@ -1,0 +1,58 @@
+{
+  "schema": "openfinram-characterization-1",
+  "source": "Xyce transient TT 0.70V 25C (fixture values shaped like characterize_read.py table3 output)",
+  "comment": "XYCE TRANSIENT CHARACTERIZED TT 0.70V 25C; MEASURED VALUES VIA CHARACTERIZATION JSON",
+  "cell_leakage_power": 12.5,
+  "clock_min_period": 1.4,
+  "pin_capacitance": {
+    "clk": 0.031,
+    "default_input": 0.006
+  },
+  "output_max_capacitance": 0.4,
+  "timing": {
+    "delay": {
+      "index_1": [0.01, 0.04],
+      "index_2": [0.0104, 0.04608],
+      "cell_rise": [[0.217, 0.272], [0.245, 0.3]],
+      "cell_fall": [[0.221, 0.274], [0.249, 0.302]],
+      "rise_transition": [0.063, 0.063],
+      "fall_transition": [0.048, 0.048]
+    },
+    "constraints": {
+      "index_1": [0.01, 0.04],
+      "index_2": [0.01, 0.04],
+      "setup_rise": [[0.048, 0.06], [0.07, 0.085]],
+      "setup_fall": [[0.05, 0.062], [0.072, 0.088]],
+      "hold_rise": [[0.02, 0.024], [0.03, 0.036]],
+      "hold_fall": [[0.022, 0.026], [0.032, 0.038]]
+    }
+  },
+  "variants": [
+    {
+      "name": "sdel0",
+      "timing": {
+        "delay": {
+          "index_1": [0.01, 0.04],
+          "index_2": [0.0104, 0.04608],
+          "cell_rise": [[0.15, 0.16], [0.19, 0.21]],
+          "cell_fall": [[0.152, 0.162], [0.192, 0.212]],
+          "rise_transition": [0.06, 0.06],
+          "fall_transition": [0.046, 0.046]
+        }
+      }
+    },
+    {
+      "name": "sdel1",
+      "timing": {
+        "delay": {
+          "index_1": [0.01, 0.04],
+          "index_2": [0.0104, 0.04608],
+          "cell_rise": [[0.18, 0.19], [0.22, 0.24]],
+          "cell_fall": [[0.182, 0.192], [0.222, 0.242]],
+          "rise_transition": [0.062, 0.062],
+          "fall_transition": [0.047, 0.047]
+        }
+      }
+    }
+  ]
+}

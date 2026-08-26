@@ -145,11 +145,23 @@ int main(int argc, char **argv) {
         const std::string result_dir =
             "./results/" + cell_name + "_" + get_run_timestamp();
         std::string liberty_error;
+        OpenFinRAM::CharacterizationData char_data;
+        OpenFinRAM::CharacterizationData* char_ptr = nullptr;
+        if (!cli_options.liberty_from_json.empty()) {
+            if (OpenFinRAM::load_characterization_json(
+                    cli_options.liberty_from_json, char_data, &liberty_error)) {
+                char_ptr = &char_data;
+            } else {
+                LOGW << "Characterization JSON load failed, falling back to "
+                        "estimated constants: " << liberty_error;
+            }
+        }
         if (!OpenFinRAM::export_estimated_liberty(
                 cli_options,
                 result_dir + "/" + cell_name + ".lef",
                 result_dir + "/" + cell_name + ".lib",
-                &liberty_error)) {
+                &liberty_error,
+                char_ptr)) {
             LOGW << "Estimated Liberty export failed: " << liberty_error;
         }
     }

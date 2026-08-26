@@ -37,6 +37,7 @@ set(SOURCES
     src/lvs_runner.cpp
     src/lef_extractor.cpp
     src/liberty_estimator.cpp
+    src/characterization_data.cpp
     src/main_config_helpers.cpp
     src/main_flow_helpers.cpp
     src/main_layout_helpers.cpp
@@ -97,4 +98,53 @@ if(BUILD_TESTING)
         COMMAND ${CMAKE_COMMAND} -E env bash ${CMAKE_SOURCE_DIR}/tests/run_def2gds_check.sh
     )
     set_tests_properties(def2gds_check PROPERTIES TIMEOUT 300 SKIP_RETURN_CODE 77)
+
+    # P0 characterization-JSON gate: a JSON carrying the estimated constants
+    # regenerates the estimated .lib byte-for-byte; measured values and
+    # per-sdel variants override as documented.
+    add_test(
+        NAME char_json_equiv_check
+        COMMAND ${CMAKE_COMMAND} -E env
+            OPENFINRAM_BIN=${CMAKE_BINARY_DIR}/OpenFinRAM
+            bash ${CMAKE_SOURCE_DIR}/tests/run_char_json_check.sh
+    )
+    set_tests_properties(char_json_equiv_check PROPERTIES TIMEOUT 600)
+
+    # P6 Table III gate (Xyce transient -> JSON -> .lib -> validator).
+    # Skips (exit 77) when Xyce is unavailable.
+    add_test(
+        NAME table3_gate
+        COMMAND ${CMAKE_COMMAND} -E env
+            OPENFINRAM_BIN=${CMAKE_BINARY_DIR}/OpenFinRAM
+            bash ${CMAKE_SOURCE_DIR}/tests/run_table3_gate.sh
+    )
+    set_tests_properties(table3_gate PROPERTIES TIMEOUT 1200 SKIP_RETURN_CODE 77)
+
+    # P2 constraints gate: sweep load-monotonicity, Liberty-pushout
+    # setup/hold, min_period and pin caps. Skips (exit 77) without Xyce.
+    add_test(
+        NAME constraints_gate
+        COMMAND ${CMAKE_COMMAND} -E env
+            bash ${CMAKE_SOURCE_DIR}/tests/run_constraints_gate.sh
+    )
+    set_tests_properties(constraints_gate PROPERTIES TIMEOUT 1200 SKIP_RETURN_CODE 77)
+
+    # P4 corner gate: SS/TT/FF sweeps -> three libs, ordered and
+    # corner-tagged. Skips (exit 77) without Xyce.
+    add_test(
+        NAME corner_gate
+        COMMAND ${CMAKE_COMMAND} -E env
+            OPENFINRAM_BIN=${CMAKE_BINARY_DIR}/OpenFinRAM
+            bash ${CMAKE_SOURCE_DIR}/tests/run_corner_gate.sh
+    )
+    set_tests_properties(corner_gate PROPERTIES TIMEOUT 1800 SKIP_RETURN_CODE 77)
+
+    # P5 interpolation gate: ladder {64,256} -> interpolated 128 validated
+    # against a held-out measured d128 sweep. Skips (exit 77) without Xyce.
+    add_test(
+        NAME interp_gate
+        COMMAND ${CMAKE_COMMAND} -E env
+            bash ${CMAKE_SOURCE_DIR}/tests/run_interp_gate.sh
+    )
+    set_tests_properties(interp_gate PROPERTIES TIMEOUT 1800 SKIP_RETURN_CODE 77)
 endif()

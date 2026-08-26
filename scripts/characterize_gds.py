@@ -28,8 +28,7 @@ Simulators:
     uv run python scripts/characterize_gds.py --gds nmos_fin_111.gds --simulator xyce --real-device --models tech/models/hspice/7nm_TT.pm --mode idvd
     uv run python scripts/characterize_gds.py --gds nmos_fin_111.gds --simulator xyce --real-device --models tech/models/hspice/7nm_TT.pm --mode all
 
-If nmos_fin_231.gds is requested but only nmos_fin_111.gds exists, the script
-resolves it generically: any <type>_fin_<...>.gds with the same ASAP7 stack
+The script resolves it generically: any <type>_fin_<...>.gds with the same ASAP7 stack
 is handled. Name encodes fins/fingers in the PDK's convention but extraction
 is geometric, not name-based.
 """

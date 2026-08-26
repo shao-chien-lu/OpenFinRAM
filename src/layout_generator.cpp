@@ -16,7 +16,9 @@ LayoutGenerator::LayoutGenerator(const MainCliOptions& options, const OpenFinRAM
 bool LayoutGenerator::load_sram_gds() {
     std::string path = join_path(get_current_dir_name(), "tech/gds/srambank_32b_boundary_2.gds");
 
-    gdstk::ErrorCode error_code;
+    // gdstk only writes error_code on failure; it must start at NoError or a
+    // successful read fails this check on uninitialized stack data.
+    gdstk::ErrorCode error_code = gdstk::ErrorCode::NoError;
     sram_lib = gdstk::read_gds(path.c_str(), 0, 1e-2, nullptr, &error_code);
     
     if (error_code != gdstk::ErrorCode::NoError) {

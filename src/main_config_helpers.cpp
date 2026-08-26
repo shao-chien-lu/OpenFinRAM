@@ -78,6 +78,11 @@ MainCliOptions parseMainCliOptions(int argc, char** argv) {
         .help("Path to ASAP7 platform (default: <openroad>/platform/asap7)")
         .default_value(std::string(""));
 
+    program.add_argument("--liberty-from")
+        .help("Characterization JSON with measured values overriding the "
+              "estimated Liberty constants (timing tables, leakage, caps).")
+        .default_value(std::string(""));
+
     program.add_argument("--bitcell-width")
         .help("Custom push-rule bitcell width (um). Default: 0.108 for logic-rule ASAP7.")
         .default_value(double{0.108})
@@ -117,6 +122,7 @@ MainCliOptions parseMainCliOptions(int argc, char** argv) {
     options.openroad_only         = program.get<bool>("--openroad");
     options.openroad_path         = program.get<std::string>("--openroad-path");
     options.platform_path         = program.get<std::string>("--platform-path");
+    options.liberty_from_json     = program.get<std::string>("--liberty-from");
     options.bitcell_width         = program.get<double>("--bitcell-width");
     options.bitcell_height        = program.get<double>("--bitcell-height");
     options.num_rows_per_mux      = program.get<unsigned>("--num-rows-per-mux");

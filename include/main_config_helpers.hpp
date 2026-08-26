@@ -21,6 +21,9 @@ struct MainCliOptions {
     bool openroad_only = false;   // alias: enable both use_yosys + use_openroad for single-port ASAP7
     std::string openroad_path = ""; // OpenROAD binary; default resolves 'openroad' from $PATH
     std::string platform_path = ""; // path to ASAP7 platform (default: <openroad>/platform/asap7)
+    // Characterization JSON feeding measured values into the Liberty emitter
+    // (--liberty-from). Empty keeps the pure estimated-constant model.
+    std::string liberty_from_json = "";
     
     // Custom Push-Rule Bitcell configuration
     double bitcell_width = 0.108;
