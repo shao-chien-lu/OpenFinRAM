@@ -10,10 +10,10 @@ read_liberty @REPO_ROOT@/tech/lib/asap7sc7p5t_SEQ_RVT_TT.lib
 read_liberty @REPO_ROOT@/tech/lib/asap7sc7p5t_SIMPLE_RVT_TT.lib
 read_lef @REPO_ROOT@/tech/lef/asap7_tech.lef
 read_lef @REPO_ROOT@/tech/lef/asap7sc7p5t_28_R.lef
-read_verilog @SYN_ROOT@/tmp/syn_TS/netlist.v
+read_verilog @REPO_ROOT@@SYN_ROOT@/tmp/syn_TS/netlist.v
 link_design ctrl_decode
 
-read_sdc @SYN_ROOT@/tmp/syn_TS/timing.sdc
+read_sdc @REPO_ROOT@@SYN_ROOT@/tmp/syn_TS/timing.sdc
 source @REPO_ROOT@/tech/setRC.tcl
 puts "Loaded ASAP7 layer, signal, clock, and via RC"
 

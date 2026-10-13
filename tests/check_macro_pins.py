@@ -4,7 +4,10 @@ import re
 import sys
 from pathlib import Path
 
-import klayout.db as kdb
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from def_to_gds import _load_klayout_db
+
+kdb = _load_klayout_db()
 
 gds, lef = map(Path, sys.argv[1:])
 layout = kdb.Layout()

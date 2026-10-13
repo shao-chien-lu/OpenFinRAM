@@ -9,7 +9,7 @@
 set -u
 cd "$(dirname "$0")/.."
 
-if ! python3 -c "import klayout.db" 2>/dev/null; then
+if ! python3 -c "import sys; sys.path.insert(0, 'scripts'); from def_to_gds import _load_klayout_db; _load_klayout_db()" 2>/dev/null; then
     echo "SKIP: klayout Python bindings not available"
     exit 77
 fi
@@ -29,7 +29,9 @@ python3 scripts/def_to_gds.py \
 
 python3 - "$OUT/ctrl_decode_smoke.gds" <<'EOF' || exit 1
 import sys
-import klayout.db as kdb
+sys.path.insert(0, "scripts")
+from def_to_gds import _load_klayout_db
+kdb = _load_klayout_db()
 
 layout = kdb.Layout()
 layout.read(sys.argv[1])
@@ -38,14 +40,11 @@ assert top is not None, "top cell missing from streamed GDS"
 instances = sum(1 for _ in top.each_inst())
 assert layout.cells() > 1, "standard-cell GDS substitution failed"
 assert instances >= 2, f"expected >=2 placed instances, found {instances}"
-# Routed/pin geometry must exist on the ASAP7 metal layers.
-m4 = layout.layer(40, 0)
-m5 = layout.layer(50, 0)
-assert not top.begin_shapes_rec(m4).at_end(), "no M4 geometry in output"
-assert not top.begin_shapes_rec(m5).at_end(), "no M5 geometry in output"
+# Routed wires stream as drawing (0); DEF pin rectangles keep their pin
+# purpose (251).
 for layer in (40, 50):
-    pins = layout.layer(layer, 251)
-    assert not top.begin_shapes_rec(pins).at_end(), f"no pin geometry on layer {layer}"
+    assert not top.begin_shapes_rec(layout.layer(layer, 0)).at_end(), f"no routed M{layer // 10} wire in output"
+    assert not top.begin_shapes_rec(layout.layer(layer, 251)).at_end(), f"no M{layer // 10} pin geometry in output"
 print(f"PASS: cells={layout.cells()} instances={instances} bbox={top.dbbox()}")
 EOF
 
