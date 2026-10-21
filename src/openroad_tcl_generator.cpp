@@ -456,35 +456,33 @@ bool OpenRoadTclGenerator::run_v2lvs(const std::string& work_dir,
                    const std::string& verilog_file,
                    const std::string& spice_file,
                    const std::string& cdl_file) const {
+    auto quote = [](const std::string& value) {
+        std::string escaped = "'";
+        for (char c : value) escaped += c == '\'' ? "'\\''" : std::string(1, c);
+        return escaped + "'";
+    };
     const std::string cdl = cdl_file.empty()
-        ? join_path(get_executable_directory(), "tech/cdl/asap7sc7p5t_28_R.cdl")
-        : cdl_file;
-    if (!directory_exists(work_dir) || !file_exists(cdl)) {
-        LOGE << "SPICE conversion requires an existing work directory and CDL library";
+        ? join_path(get_current_dir_name(), "tech/cdl/asap7sc7p5t_28_R.cdl") : cdl_file;
+    if (!file_exists(cdl)) {
+        LOGE << "Mapped controller conversion requires CDL: " << cdl;
         return false;
     }
-    if (std::system("which v2lvs > /dev/null 2>&1") != 0) {
-        LOGE << "v2lvs not found in PATH; refusing to generate a placeholder SPICE netlist";
+    const std::string converter = join_path(get_current_dir_name(), "scripts/mapped_verilog_to_spice.py");
+    const std::string command = "python3 " + quote(converter)
+        + " --verilog " + quote(join_path(work_dir, verilog_file))
+        + " --cdl " + quote(cdl)
+        + " --output " + quote(join_path(work_dir, spice_file))
+        + " > " + quote(join_path(work_dir, "verilog_to_spice.log")) + " 2>&1";
+    if (std::system(command.c_str()) != 0) {
+        LOGE << "Mapped controller SPICE conversion failed; see " << work_dir << "/verilog_to_spice.log";
         return false;
     }
-    std::ostringstream cmd;
-    cmd << "cd " << shell_quote(work_dir)
-        << " && v2lvs -v " << shell_quote(verilog_file)
-        << " -o " << shell_quote(spice_file)
-        << " -s " << shell_quote(cdl)
-        << " > " << shell_quote(join_path(work_dir, "v2lvs.log")) << " 2>&1";
-    LOGI << "Running v2lvs (OpenROAD path): " << cmd.str();
-    const int rc = std::system(cmd.str().c_str());
-    if (rc != 0) {
-        LOGE << "v2lvs failed rc=" << rc << "; refusing partial or placeholder SPICE";
+    struct stat output;
+    if (stat(join_path(work_dir, spice_file).c_str(), &output) != 0 || output.st_size == 0) {
+        LOGE << "Mapped controller SPICE conversion wrote no netlist: " << join_path(work_dir, spice_file);
         return false;
     }
-    struct stat output_stat;
-    const std::string output = join_path(work_dir, spice_file);
-    if (stat(output.c_str(), &output_stat) != 0 || output_stat.st_size == 0) {
-        LOGE << "v2lvs completed without a nonempty SPICE netlist";
-        return false;
-    }
+    LOGI << "Converted routed controller to structural SPICE with CDL pin ordering";
     return true;
 }
 

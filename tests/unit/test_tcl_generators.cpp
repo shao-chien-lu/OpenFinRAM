@@ -135,8 +135,10 @@ TEST(OpenRoadTclGeneratorUnitTest, ParseQorReportCellArea) {
     EXPECT_NEAR(gen.get_qor_report().cell_area, 123.45, 1e-9);
 }
 
+// A failed or silent controller conversion must stop the build rather than
+// leave a partial or empty netlist for LVS (upstream PR #8).
 TEST(OpenRoadTclGeneratorUnitTest, RejectsFailedOrMissingSpiceOutput) {
-    char temporary[] = "/tmp/openfinram-v2lvs-XXXXXX";
+    char temporary[] = "/tmp/openfinram-spice-XXXXXX";
     ASSERT_NE(mkdtemp(temporary), nullptr);
     const std::filesystem::path dir(temporary);
     write_file((dir / "cells.cdl").string(), ".SUBCKT cell A Y\n.ENDS\n");
@@ -145,15 +147,16 @@ TEST(OpenRoadTclGeneratorUnitTest, RejectsFailedOrMissingSpiceOutput) {
     const std::string test_path = dir.string() + ":" + original_path;
     setenv("PATH", test_path.c_str(), 1);
     OpenRoadTclGenerator gen;
+    // The converter runs as `python3 scripts/mapped_verilog_to_spice.py ...`;
+    // a stand-in python3 earlier on PATH plays a failing converter.
     for (const char* script : {
-            "#!/bin/sh\nprintf 'partial netlist' > output.sp\nexit 7\n",
+            "#!/bin/sh\nprintf 'partial netlist' > \"$7\"\nexit 7\n",
             "#!/bin/sh\nexit 0\n"}) {
         std::filesystem::remove(dir / "output.sp");
-        write_file((dir / "v2lvs").string(), script);
-        std::filesystem::permissions(dir / "v2lvs",
-            std::filesystem::perms::owner_all);
+        write_file((dir / "python3").string(), script);
+        std::filesystem::permissions(dir / "python3", std::filesystem::perms::owner_all);
         EXPECT_FALSE(gen.run_v2lvs(dir.string(), "input.v", "output.sp",
-                                  (dir / "cells.cdl").string()));
+                                   (dir / "cells.cdl").string()));
     }
     if (path) setenv("PATH", original_path.c_str(), 1);
     else unsetenv("PATH");

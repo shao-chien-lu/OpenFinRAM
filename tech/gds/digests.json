@@ -1,0 +1,9 @@
+{
+  "sram_cell_8t": "578ead3a154a4b12f941d691327d327b55d214f28fdf8fd5b7ba46d06ef477b3",
+  "sram_cell_8t_edges": "81ce6ffcf58a4b23b1480f461926605ce28aae7d4ffad3baba99a1e5ce52aed9",
+  "sram_cell_8t_tap": "7c0b2710db83bb94758de3b0a42abce0fdeaad60d39978213527ed1092d91073",
+  "sram_wordline_arrays": "f44a3060f041d7cc92ede511d111a1433d01c4c57cdcf2f5575a9b0f1d86f374",
+  "sram_8t_iocolumn": "ab3a2927431f190f99ad4174fe1f80a9254346bca24bc0d6d1d815a6308f4efa",
+  "sram_8t_wl_slices": "66faa80a1b2ca95e844576cd2194ed940a35485304904fd10ab09af778f9be5d",
+  "sram_6t_iocolumn": "9eb31dae7da6c5e5c307ac51e4a9b7370711131c89866e5390137787188a7d44"
+}

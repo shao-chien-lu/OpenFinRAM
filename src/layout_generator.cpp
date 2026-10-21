@@ -2281,6 +2281,12 @@ bool LayoutGenerator::run_sram_gds_integration_and_writeback() {
                 if (sram_m4_pin_layer != nullptr) {
                     gdstk::Tag pin_tag_m3 = gdstk::make_tag(sram_m3_pin_layer->layer_number, sram_m3_pin_layer->datatype);
                     gdstk::Tag pin_tag_m4 = gdstk::make_tag(sram_m4_pin_layer->layer_number, sram_m4_pin_layer->datatype);
+                    // A pin found on a routed label keeps that label's metal
+                    // (OpenROAD routes control and address pins on M4/M5);
+                    // only the purpose is forced to the pin datatype.
+                    auto pin_tag_on = [&](gdstk::Tag label_tag) {
+                        return gdstk::make_tag(gdstk::get_layer(label_tag), sram_m3_pin_layer->datatype);
+                    };
                     
                     // 首先，使用 flatten 將 sram_cell 展平以獲取所有 labels 的絕對位置
                     // 創建一個臨時的 sram_cell 副本用於 flatten
@@ -2396,7 +2402,7 @@ bool LayoutGenerator::run_sram_gds_integration_and_writeback() {
                             if (!ctrl_pins[j].found && strcasecmp(label->text, ctrl_pins[j].search_name) == 0) {
                                 ctrl_pins[j].x = label->origin.x;
                                 ctrl_pins[j].y = label->origin.y;
-                                ctrl_pins[j].tag = label->tag;
+                                ctrl_pins[j].tag = pin_tag_on(label->tag);
                                 ctrl_pins[j].found = true;
                                 LOGI << "  Found " << ctrl_pins[j].search_name << " at (" 
                                         << label->origin.x << ", " << label->origin.y << ")";
@@ -2452,7 +2458,7 @@ bool LayoutGenerator::run_sram_gds_integration_and_writeback() {
                             if (label->text != nullptr && strcmp(label->text, addr_name) == 0) {
                                 ax = label->origin.x;
                                 ay = label->origin.y;
-                                addr_pin_tag = label->tag;
+                                addr_pin_tag = pin_tag_on(label->tag);
                                 found = true;
                                 break;
                             }
@@ -2461,7 +2467,6 @@ bool LayoutGenerator::run_sram_gds_integration_and_writeback() {
                         gdstk::Label* addr_pin = (gdstk::Label*)gdstk::allocate_clear(sizeof(gdstk::Label));
                         addr_pin->init(addr_name);
                         addr_pin->origin = {ax, ay};
-                        // Preserve the routed pin layer, including OpenROAD M4/M5.
                         addr_pin->tag = addr_pin_tag;
                         addr_pin->magnification = 0.02;
                         sram_cell->label_array.append(addr_pin);

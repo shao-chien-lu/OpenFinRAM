@@ -69,6 +69,46 @@ install(
 )
 
 # ---------------------------------------------------------------------------
+# Generated cell libraries. The 8T bitcell family, the wordline arrays, the 8T
+# and 6T IO blocks and the wordline driver slices are generator output, written
+# into tech/gds where the flow reads them; git tracks only their digests
+# (tech/gds/digests.json, scripts/tech_gds.py). The generators need gdstk and
+# chipforge_asap7, which the 2RW and 6T flows need anyway.
+# ---------------------------------------------------------------------------
+if(EXISTS "${CMAKE_SOURCE_DIR}/.venv/bin/python")
+    set(OPENFINRAM_PYTHON "${CMAKE_SOURCE_DIR}/.venv/bin/python")
+else()
+    find_package(Python3 COMPONENTS Interpreter)
+    set(OPENFINRAM_PYTHON "${Python3_EXECUTABLE}")
+endif()
+set(TECH_GDS_FILES)
+foreach(library sram_cell_8t sram_cell_8t_edges sram_cell_8t_tap sram_wordline_arrays
+                sram_8t_iocolumn sram_8t_wl_slices sram_6t_iocolumn)
+    list(APPEND TECH_GDS_FILES "${CMAKE_SOURCE_DIR}/tech/gds/${library}.gds")
+endforeach()
+file(GLOB TECH_GDS_GENERATORS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/scripts/generate_asap7_*.py")
+execute_process(
+    COMMAND "${OPENFINRAM_PYTHON}" -c "import gdstk, chipforge_asap7"
+    RESULT_VARIABLE TECH_GDS_PYTHON_RESULT OUTPUT_QUIET ERROR_QUIET
+)
+if(TECH_GDS_PYTHON_RESULT EQUAL 0)
+    add_custom_command(
+        OUTPUT ${TECH_GDS_FILES}
+        COMMAND "${OPENFINRAM_PYTHON}" "${CMAKE_SOURCE_DIR}/scripts/tech_gds.py"
+        DEPENDS "${CMAKE_SOURCE_DIR}/scripts/tech_gds.py" ${TECH_GDS_GENERATORS}
+                "${CMAKE_SOURCE_DIR}/tech/gds/srambank_32b_boundary_2.gds"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        COMMENT "Generating the ASAP7 cell libraries in tech/gds"
+        VERBATIM
+    )
+    add_custom_target(tech_gds ALL DEPENDS ${TECH_GDS_FILES})
+else()
+    message(WARNING "${OPENFINRAM_PYTHON} cannot import gdstk and chipforge_asap7, so the "
+        "generated cell libraries in tech/gds are not built; the 2RW and 6T flows need "
+        "them (scripts/tech_gds.py writes them).")
+endif()
+
+# ---------------------------------------------------------------------------
 # Tests (ctest). The harness scripts cd to the repo root themselves, so they
 # work from any build directory. External tools are checked inside the
 # scripts; missing tools surface as a clear test failure message.
@@ -98,6 +138,45 @@ if(BUILD_TESTING)
         COMMAND ${CMAKE_COMMAND} -E env bash ${CMAKE_SOURCE_DIR}/tests/run_def2gds_check.sh
     )
     set_tests_properties(def2gds_check PROPERTIES TIMEOUT 300 SKIP_RETURN_CODE 77)
+
+    # The built cell libraries in tech/gds against their recorded digests.
+    add_test(
+        NAME asap7_tech_gds_check
+        COMMAND ${OPENFINRAM_PYTHON} ${CMAKE_SOURCE_DIR}/scripts/tech_gds.py --check ${TECH_GDS_FILES}
+    )
+    set_tests_properties(asap7_tech_gds_check PROPERTIES TIMEOUT 120 SKIP_RETURN_CODE 77)
+
+    # Academic-style sramcol_xN / array_xNxM hierarchy for parameterized 8T
+    # wordlines, with the same builder covering non-standard 6T sizes.
+    add_test(
+        NAME asap7_wordline_array_check
+        COMMAND ${CMAKE_COMMAND} -E env bash ${CMAKE_SOURCE_DIR}/tests/run_wordline_array_check.sh
+    )
+    set_tests_properties(asap7_wordline_array_check PROPERTIES
+        TIMEOUT 300
+        SKIP_RETURN_CODE 77
+    )
+
+    # Routed dual-port IO column: two independent IO cores connected to the
+    # same capped 8T half-arrays using layer-separated M2/M4/M5 paths.
+    add_test(
+        NAME asap7_8t_iocolumn_check
+        COMMAND ${CMAKE_COMMAND} -E env bash ${CMAKE_SOURCE_DIR}/tests/run_8t_iocolumn_check.sh
+    )
+    set_tests_properties(asap7_8t_iocolumn_check PROPERTIES
+        TIMEOUT 300
+        SKIP_RETURN_CODE 77
+    )
+
+    # The wordline driver slice ladder the 2RW macro's strips are built from.
+    add_test(
+        NAME asap7_8t_wl_slices_check
+        COMMAND ${CMAKE_COMMAND} -E env bash ${CMAKE_SOURCE_DIR}/tests/run_8t_wl_slices_check.sh
+    )
+    set_tests_properties(asap7_8t_wl_slices_check PROPERTIES
+        TIMEOUT 600
+        SKIP_RETURN_CODE 77
+    )
 
     # P0 characterization-JSON gate: a JSON carrying the estimated constants
     # regenerates the estimated .lib byte-for-byte; measured values and
