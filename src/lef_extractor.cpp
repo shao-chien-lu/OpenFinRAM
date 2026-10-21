@@ -232,7 +232,8 @@ bool rect_touches_boundary(const Rect& rect, double width, double height) {
 std::string build_lef(const std::string& cell_name,
                       const Rect& macro,
                       const std::vector<MacroPin>& pins,
-                      bool used_boundary) {
+                      bool used_boundary,
+                      int highest_metal) {
     const double width = macro.x_max - macro.x_min;
     const double height = macro.y_max - macro.y_min;
     const double foreign_x = std::abs(macro.x_min) < 5e-10 ? 0.0 : -macro.x_min;
@@ -286,7 +287,7 @@ std::string build_lef(const std::string& cell_name,
     // blocks routing across every layer used internally.  Explicit PIN shapes
     // remain available to the router even where they overlap this OBS box.
     out << "  OBS\n";
-    for (int level = 1; level <= 5; ++level) {
+    for (int level = 1; level <= highest_metal; ++level) {
         out << "    LAYER M" << level << " ;\n";
         out << "      RECT 0 0 " << width << " " << height << " ;\n";
     }
@@ -398,6 +399,21 @@ bool export_lef(const std::string& project_root,
         return false;
     }
 
+    // Preserve the legacy M1-M5 abstraction, but also reserve every upper
+    // routing layer occupied by the new macro-level interconnect hierarchy.
+    int highest_metal = 5;
+    for (int level = 9; level > 5; --level) {
+        bool occupied = false;
+        for (uint16_t purpose : {kDrawingPurpose, kPinPurpose}) {
+            gdstk::Array<gdstk::Polygon*> polygons = {};
+            top->get_polygons(true, true, -1, true,
+                gdstk::make_tag(static_cast<uint16_t>(level * 10), purpose), polygons);
+            occupied = occupied || polygons.count > 0;
+            free_polygon_array(polygons);
+        }
+        if (occupied) { highest_metal = level; break; }
+    }
+
     const std::string lef_path = project_root + "/" + cell_name + ".lef";
     std::ofstream out(lef_path, std::ios::out | std::ios::trunc);
     if (!out) {
@@ -405,7 +421,7 @@ bool export_lef(const std::string& project_root,
         library.free_all();
         return false;
     }
-    out << build_lef(cell_name, macro, pins, used_boundary);
+    out << build_lef(cell_name, macro, pins, used_boundary, highest_metal);
     out.close();
     if (!out) {
         if (error) *error = "Failed while writing LEF: " + lef_path;

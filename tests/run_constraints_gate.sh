@@ -15,17 +15,13 @@
 #       over one full 4 ns cycle including the bitline restore)
 #
 # Every python check must fail the gate: the blocks below all carry '|| exit 1'.
-# Skips (exit 77) when Xyce is unavailable.
+# Skips (exit 77) when Xyce is unavailable or cannot initialize.
 set -u
 cd "$(dirname "$0")/.."
 REPO="$(pwd)"
 
-XYCE="/home/jeff/iv4/local/xyce-14.4/bin/Xyce"
-[ -x "$XYCE" ] || XYCE="$(command -v Xyce || true)"
-if [ -z "${XYCE:-}" ] || [ ! -x "$XYCE" ]; then
-    echo "SKIP: Xyce not available"
-    exit 77
-fi
+source tests/xyce_gate_common.sh
+require_xyce
 
 MODELS="$REPO/tech/models/hspice/7nm_TT.pm"
 OUT="$(mktemp -d)"

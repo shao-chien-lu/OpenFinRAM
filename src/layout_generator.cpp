@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cfloat>
 #include <fstream>
+#include <cstdlib>
+#include <sstream>
 
 #include "plog/Log.h"
 
@@ -14,7 +16,10 @@
 LayoutGenerator::LayoutGenerator(const MainCliOptions& options, const OpenFinRAM::LayerMap& layer_map) : cli_options_(options), layer_map_(layer_map) {}
 
 bool LayoutGenerator::load_sram_gds() {
-    std::string path = join_path(get_current_dir_name(), "tech/gds/srambank_32b_boundary_2.gds");
+    const std::string filename = cli_options_.single_port
+        ? "tech/gds/srambank_32b_boundary_2.gds"
+        : "tech/gds/sram_8t_iocolumn.gds";
+    std::string path = join_path(get_current_dir_name(), filename);
 
     // gdstk only writes error_code on failure; it must start at NoError or a
     // successful read fails this check on uninitialized stack data.
@@ -34,6 +39,42 @@ bool LayoutGenerator::load_sram_gds() {
 }
 
 bool LayoutGenerator::extract_required_cells() {
+    if (!cli_options_.single_port) {
+        if (cli_options_.num_rows_per_mux != 4) {
+            LOGE << "The routed 8T IO wrappers currently require --num-rows-per-mux 4";
+            return false;
+        }
+
+        // One unsplit array per column, 2*NUM_WL wordlines, with an IO column
+        // at each end of the bitlines.
+        const unsigned rows = 2 * cli_options_.num_wls;
+        const std::string array_name =
+            "array_x" + std::to_string(rows) + "x4_sram_8t";
+        const std::string colgrp_name =
+            "colgrp_x" + std::to_string(rows) + "x4_sram_8t";
+        sram_cells_.bitcell = sram_lib.get_cell("sram_cell_8t");
+        sram_cells_.array_cell = sram_lib.get_cell(array_name.c_str());
+        sram_cells_.io_colgrp = sram_lib.get_cell("iocol_sram_8t_a");
+        auto* io_b = sram_lib.get_cell("iocol_sram_8t_b");
+        sram_cells_.colgrp = sram_lib.get_cell(colgrp_name.c_str());
+
+        if (sram_cells_.bitcell == nullptr ||
+            sram_cells_.array_cell == nullptr ||
+            sram_cells_.io_colgrp == nullptr ||
+            io_b == nullptr ||
+            sram_cells_.colgrp == nullptr) {
+            LOGE << "The routed 8T IO-column library does not contain the "
+                 << rows << "-wordline array contract";
+            LOGE << "Regenerate tech/gds/sram_wordline_arrays.gds and "
+                 << "tech/gds/sram_8t_iocolumn.gds with --word-lines " << rows;
+            return false;
+        }
+
+        LOGI << "Found routed dual-port cells: " << array_name << ", "
+             << sram_cells_.io_colgrp->name << ", " << io_b->name << ", " << colgrp_name;
+        return true;
+    }
+
     const char* cell_names[] = {"FILLER_BLANK_6t122", "sram_cell_6t_122", "dummy_sram_6t122", "tapcell_sram_6t122",
                                 "dummy_topbot_v1", "dummy_topbot_v2", "FILLER_cgedge", "iocolgrp_sram_6t122_v2"};
     // Sub-cells only needed to build a deeper-mux io_colgrp (num_rows_per_mux != 4).
@@ -2281,6 +2322,12 @@ bool LayoutGenerator::run_sram_gds_integration_and_writeback() {
                 if (sram_m4_pin_layer != nullptr) {
                     gdstk::Tag pin_tag_m3 = gdstk::make_tag(sram_m3_pin_layer->layer_number, sram_m3_pin_layer->datatype);
                     gdstk::Tag pin_tag_m4 = gdstk::make_tag(sram_m4_pin_layer->layer_number, sram_m4_pin_layer->datatype);
+                    // A pin found on a routed label keeps that label's metal
+                    // (OpenROAD routes control and address pins on M4/M5);
+                    // only the purpose is forced to the pin datatype.
+                    auto pin_tag_on = [&](gdstk::Tag label_tag) {
+                        return gdstk::make_tag(gdstk::get_layer(label_tag), sram_m3_pin_layer->datatype);
+                    };
                     
                     // 首先，使用 flatten 將 sram_cell 展平以獲取所有 labels 的絕對位置
                     // 創建一個臨時的 sram_cell 副本用於 flatten
@@ -2396,7 +2443,7 @@ bool LayoutGenerator::run_sram_gds_integration_and_writeback() {
                             if (!ctrl_pins[j].found && strcasecmp(label->text, ctrl_pins[j].search_name) == 0) {
                                 ctrl_pins[j].x = label->origin.x;
                                 ctrl_pins[j].y = label->origin.y;
-                                ctrl_pins[j].tag = label->tag;
+                                ctrl_pins[j].tag = pin_tag_on(label->tag);
                                 ctrl_pins[j].found = true;
                                 LOGI << "  Found " << ctrl_pins[j].search_name << " at (" 
                                         << label->origin.x << ", " << label->origin.y << ")";
@@ -2452,7 +2499,7 @@ bool LayoutGenerator::run_sram_gds_integration_and_writeback() {
                             if (label->text != nullptr && strcmp(label->text, addr_name) == 0) {
                                 ax = label->origin.x;
                                 ay = label->origin.y;
-                                addr_pin_tag = label->tag;
+                                addr_pin_tag = pin_tag_on(label->tag);
                                 found = true;
                                 break;
                             }
@@ -2461,7 +2508,6 @@ bool LayoutGenerator::run_sram_gds_integration_and_writeback() {
                         gdstk::Label* addr_pin = (gdstk::Label*)gdstk::allocate_clear(sizeof(gdstk::Label));
                         addr_pin->init(addr_name);
                         addr_pin->origin = {ax, ay};
-                        // Preserve the routed pin layer, including OpenROAD M4/M5.
                         addr_pin->tag = addr_pin_tag;
                         addr_pin->magnification = 0.02;
                         sram_cell->label_array.append(addr_pin);
@@ -3479,8 +3525,65 @@ bool LayoutGenerator::run_sram_gds_integration_and_writeback() {
     return true;
 }
 
+bool LayoutGenerator::create_dual_port_macro() {
+    // The 6T macro's staggered IO is built at 4:1, 8:1 and 16:1 (checked at
+    // the command line); the 8T IO blocks at 4:1 only.
+    if (!cli_options_.bitcell_6t && cli_options_.num_rows_per_mux != 4) {
+        LOGE << "The 2RW physical IO currently supports a four-row column mux";
+        return false;
+    }
+    const std::string root = get_current_dir_name();
+    const std::string timestamp = get_run_timestamp();
+    const bool openroad = cli_options_.use_openroad || cli_options_.openroad_only;
+    const std::string controller = join_path(root, "tmp/" +
+        std::string(openroad ? "openroad_" : "innovus_") + timestamp + "/ctrl_decode.gds");
+    if (!file_exists(controller)) {
+        LOGE << "2RW macro assembly requires the routed controller GDS: " << controller;
+        return false;
+    }
+    const std::string name = "sram_x" + std::to_string(2 * cli_options_.num_wls)
+        + "x" + std::to_string(cli_options_.num_data_bits)
+        + "x" + std::to_string(cli_options_.num_banks);
+    const std::string work = join_path(root, "tmp/macro_2rw_" + timestamp);
+    const std::string output = join_path(root, "results/" + name + "_" + timestamp + "/" + name + ".gds");
+    const std::string local_python = join_path(root, ".venv/bin/python");
+    const std::string python = file_exists(local_python) ? local_python : "python3";
+    std::string router = cli_options_.openroad_path.empty() ? "openroad" : cli_options_.openroad_path;
+    if (directory_exists(router)) router = join_path(router, "build/src/openroad");
+    auto quote = [](const std::string& value) {
+        std::string escaped = "'";
+        for (char c : value) escaped += c == '\'' ? "'\\''" : std::string(1, c);
+        return escaped + "'";
+    };
+    std::ostringstream command;
+    command << quote(python) << " " << quote(join_path(root, "scripts/compile_asap7_2rw.py"))
+        << " --wordlines " << cli_options_.num_wls
+        << " --bits " << cli_options_.num_data_bits
+        << " --banks " << cli_options_.num_banks
+        << (cli_options_.share_port_b ? " --share-port-b" : "")
+        << (cli_options_.bitcell_6t ? " --bitcell 6t --mux " + std::to_string(cli_options_.num_rows_per_mux) : "")
+        << (cli_options_.segment_bits ? " --segment-bits " + std::to_string(cli_options_.segment_bits) : "")
+        << (cli_options_.strips_in_controller
+                ? " --band " + quote(join_path(root, "tmp/openroad_" + timestamp + "/band")) : "")
+        << " --controller " << quote(controller)
+        << " --work " << quote(work)
+        << " --output " << quote(output)
+        << " --openroad " << quote(router);
+    LOGI << "Assembling and routing 2RW macro; reports: " << work;
+    if (std::system(command.str().c_str()) != 0) {
+        LOGE << "2RW macro assembly or physical connectivity verification failed";
+        return false;
+    }
+    return file_exists(output);
+}
+
 bool LayoutGenerator::gen_layout() {
     LOGD << "Generating layout...";
+
+    // The 8T path generates the requested tapped geometry on demand and uses
+    // physical pin abstracts for macro routing. It does not enter the 6T
+    // assembler, whose pitches, fillers, and PG coordinates are unrelated.
+    if (!cli_options_.single_port) return create_dual_port_macro();
 
     if (!load_sram_gds()) {
         LOGE << "Failed to load SRAM GDS!";

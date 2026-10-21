@@ -41,7 +41,8 @@ std::string read_file(const std::string& path) {
 // polygon is omitted to exercise the bounding-box fallback path.
 std::string write_fixture_gds(const std::filesystem::path& dir,
                               const std::string& cell_name,
-                              bool with_boundary) {
+                              bool with_boundary,
+                              uint16_t internal_layer = 0) {
     gdstk::Library lib = {};
     lib.init("fixture_lib", 1e-6, 1e-9);
 
@@ -85,6 +86,15 @@ std::string write_fixture_gds(const std::filesystem::path& dir,
         cell->label_array.append(label);
     }
 
+    if (internal_layer) {
+        auto* shape = (gdstk::Polygon*)gdstk::allocate_clear(sizeof(gdstk::Polygon));
+        shape->tag = gdstk::make_tag(internal_layer, 0);
+        shape->point_array.append(gdstk::Vec2{3, 3});
+        shape->point_array.append(gdstk::Vec2{4, 3});
+        shape->point_array.append(gdstk::Vec2{4, 4});
+        shape->point_array.append(gdstk::Vec2{3, 4});
+        cell->polygon_array.append(shape);
+    }
     const std::string gds_path = (dir / (cell_name + ".gds")).string();
     gdstk::ErrorCode ec = lib.write_gds(gds_path.c_str(), 0, nullptr);
     EXPECT_EQ(ec, gdstk::ErrorCode::NoError);
@@ -119,6 +129,19 @@ TEST(LefExtractorTest, ExportsSizeAndPinsFromBoundary) {
     EXPECT_NE(lef.find("LAYER M1 ;"), std::string::npos);
     EXPECT_NE(lef.find("PIN WLT0"), std::string::npos);
     EXPECT_NE(lef.find("LAYER M3 ;"), std::string::npos);
+}
+
+TEST(LefExtractorTest, BlocksUpperMetalUsedByMacroRouting) {
+    auto dir = std::filesystem::temp_directory_path() / "openfinram_lef_upper_test";
+    std::filesystem::create_directories(dir);
+    const auto gds = write_fixture_gds(dir, "upper_macro", true, 80);
+    std::string out_path, error;
+    ASSERT_TRUE(export_lef(dir.string(), "upper_macro", gds, &out_path, &error)) << error;
+    const auto lef = read_file(out_path);
+    const auto obs = lef.substr(lef.find("  OBS"));
+    EXPECT_NE(obs.find("LAYER M6 ;"), std::string::npos);
+    EXPECT_NE(obs.find("LAYER M8 ;"), std::string::npos);
+    EXPECT_EQ(obs.find("LAYER M9 ;"), std::string::npos);
 }
 
 TEST(LefExtractorTest, PinGeometryNormalizedToBoundaryCorner) {

@@ -20,3 +20,12 @@ asap7_drc.drc
 # python/experiment scratch
 __pycache__/
 temp_table/
+
+# generated cell libraries (scripts/tech_gds.py; digests in tech/gds/digests.json)
+/tech/gds/sram_cell_8t.gds
+/tech/gds/sram_cell_8t_edges.gds
+/tech/gds/sram_cell_8t_tap.gds
+/tech/gds/sram_wordline_arrays.gds
+/tech/gds/sram_8t_iocolumn.gds
+/tech/gds/sram_8t_wl_slices.gds
+/tech/gds/sram_6t_iocolumn.gds

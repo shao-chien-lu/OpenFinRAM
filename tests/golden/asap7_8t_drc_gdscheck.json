@@ -1,0 +1,239 @@
+{
+  "binary_sha256": "055997b732bda7952edc842a7d3a33fca23ecfb48cebfd68faf6b77383999e25",
+  "deck_sha256": "fe8d8ae75fbb4c08f31719c62f815ff7a9bdaa587eb4689cc0beca0bd3cae269",
+  "engine": "gdscheck",
+  "findings": {
+    "sram_8t_iocolumn|array_x128x4_sram_8t|M1.S": {
+      "count": 512,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|array_x128x4_sram_8t|M2.S": {
+      "count": 504,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|array_x2x4_sram_8t|M1.S": {
+      "count": 8,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|array_x32x4_sram_8t|M1.S": {
+      "count": 128,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|array_x32x4_sram_8t|M2.S": {
+      "count": 120,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|array_x64x4_sram_8t|M1.S": {
+      "count": 256,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|array_x64x4_sram_8t|M2.S": {
+      "count": 248,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|colgrp_half_x128x4_sram_8t|M1.S": {
+      "count": 512,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|colgrp_half_x128x4_sram_8t|M2.S": {
+      "count": 504,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|colgrp_half_x2x4_sram_8t|M1.S": {
+      "count": 8,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|colgrp_half_x32x4_sram_8t|M1.S": {
+      "count": 128,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|colgrp_half_x32x4_sram_8t|M2.S": {
+      "count": 120,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|colgrp_half_x64x4_sram_8t|M1.S": {
+      "count": 256,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|colgrp_half_x64x4_sram_8t|M2.S": {
+      "count": 248,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|colgrp_pair_x128x4_sram_8t|M1.S": {
+      "count": 1032,
+      "limit_nm": 18.0,
+      "worst_nm": 1.0
+    },
+    "sram_8t_iocolumn|colgrp_pair_x128x4_sram_8t|M2.S": {
+      "count": 1008,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|colgrp_pair_x2x4_sram_8t|M1.S": {
+      "count": 24,
+      "limit_nm": 18.0,
+      "worst_nm": 1.0
+    },
+    "sram_8t_iocolumn|colgrp_pair_x32x4_sram_8t|M1.S": {
+      "count": 264,
+      "limit_nm": 18.0,
+      "worst_nm": 1.0
+    },
+    "sram_8t_iocolumn|colgrp_pair_x32x4_sram_8t|M2.S": {
+      "count": 240,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|colgrp_pair_x64x4_sram_8t|M1.S": {
+      "count": 520,
+      "limit_nm": 18.0,
+      "worst_nm": 1.0
+    },
+    "sram_8t_iocolumn|colgrp_pair_x64x4_sram_8t|M2.S": {
+      "count": 496,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|colgrp_x128x4_sram_8t|M1.S": {
+      "count": 516,
+      "limit_nm": 18.0,
+      "worst_nm": 1.0
+    },
+    "sram_8t_iocolumn|colgrp_x128x4_sram_8t|M2.S": {
+      "count": 504,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|colgrp_x2x4_sram_8t|M1.S": {
+      "count": 12,
+      "limit_nm": 18.0,
+      "worst_nm": 1.0
+    },
+    "sram_8t_iocolumn|colgrp_x32x4_sram_8t|M1.S": {
+      "count": 132,
+      "limit_nm": 18.0,
+      "worst_nm": 1.0
+    },
+    "sram_8t_iocolumn|colgrp_x32x4_sram_8t|M2.S": {
+      "count": 120,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|colgrp_x64x4_sram_8t|M1.S": {
+      "count": 260,
+      "limit_nm": 18.0,
+      "worst_nm": 1.0
+    },
+    "sram_8t_iocolumn|colgrp_x64x4_sram_8t|M2.S": {
+      "count": 248,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|sram_cell_8t_b_end|M1.S": {
+      "count": 1,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|sram_cell_8t_b|M1.S": {
+      "count": 1,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|sram_cell_8t|M1.S": {
+      "count": 1,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|sramcol_x128_sram_8t|M1.S": {
+      "count": 128,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|sramcol_x128_sram_8t|M2.S": {
+      "count": 126,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|sramcol_x2_sram_8t|M1.S": {
+      "count": 2,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|sramcol_x32_sram_8t|M1.S": {
+      "count": 32,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|sramcol_x32_sram_8t|M2.S": {
+      "count": 30,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_8t_iocolumn|sramcol_x64_sram_8t|M1.S": {
+      "count": 64,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_8t_iocolumn|sramcol_x64_sram_8t|M2.S": {
+      "count": 62,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_cell_8t_edges|dummy_cell_8t|M1.S": {
+      "count": 1,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_cell_8t_edges|dummy_vertical_array_X64_8t_lr|M2.S": {
+      "count": 62,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_cell_8t_edges|dummy_vertical_array_X64_8t_v2_lr|M2.S": {
+      "count": 62,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_cell_8t_edges|dummy_vertical_array_X64_8t_v2|M2.S": {
+      "count": 62,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_cell_8t_edges|dummy_vertical_array_X64_8t|M2.S": {
+      "count": 62,
+      "limit_nm": 18.0,
+      "worst_nm": 8.0
+    },
+    "sram_cell_8t|sram_cell_8t_b_end|M1.S": {
+      "count": 1,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_cell_8t|sram_cell_8t_b|M1.S": {
+      "count": 1,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    },
+    "sram_cell_8t|sram_cell_8t|M1.S": {
+      "count": 1,
+      "limit_nm": 18.0,
+      "worst_nm": 17.5
+    }
+  },
+  "profile": "asap7-device-v2",
+  "version": "gdscheck 0.2.0"
+}

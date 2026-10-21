@@ -10,10 +10,10 @@ read_liberty @REPO_ROOT@/tech/lib/asap7sc7p5t_SEQ_RVT_TT.lib
 read_liberty @REPO_ROOT@/tech/lib/asap7sc7p5t_SIMPLE_RVT_TT.lib
 read_lef @REPO_ROOT@/tech/lef/asap7_tech.lef
 read_lef @REPO_ROOT@/tech/lef/asap7sc7p5t_28_R.lef
-read_verilog @SYN_ROOT@/tmp/syn_TS/netlist.v
+read_verilog @REPO_ROOT@@SYN_ROOT@/tmp/syn_TS/netlist.v
 link_design ctrl_decode
 
-read_sdc @SYN_ROOT@/tmp/syn_TS/timing.sdc
+read_sdc @REPO_ROOT@@SYN_ROOT@/tmp/syn_TS/timing.sdc
 source @REPO_ROOT@/tech/setRC.tcl
 puts "Loaded ASAP7 layer, signal, clock, and via RC"
 
@@ -29,8 +29,8 @@ catch {source "@REPO_ROOT@/tech/make_tracks.tcl"} ; puts "tech tracks sourced or
 make_tracks M1 -x_offset 0 -y_offset 0 -x_pitch 0.036 -y_pitch 0.036
 make_tracks M2 -x_offset 0 -y_offset 0 -x_pitch 0.036 -y_pitch 0.036
 make_tracks M3 -x_offset 0 -y_offset 0 -x_pitch 0.036 -y_pitch 0.036
-make_tracks M4 -x_offset 0 -y_offset 0 -x_pitch 0.048 -y_pitch 0.048
-make_tracks M5 -x_offset 0 -y_offset 0 -x_pitch 0.048 -y_pitch 0.048
+make_tracks M4 -x_offset 0.012 -y_offset 0.012 -x_pitch 0.048 -y_pitch 0.048
+make_tracks M5 -x_offset 0.012 -y_offset 0.012 -x_pitch 0.048 -y_pitch 0.048
 place_pins -hor_layers M4 -ver_layers M5
 
 add_global_connection -net VDD -pin_pattern {^VDD$} -power
@@ -38,7 +38,31 @@ add_global_connection -net VSS -pin_pattern {^VSS$} -ground
 global_connect
 
 set_voltage 0.7
-tapcell -distance 14 -tapcell_master TAPCELL_ASAP7_75t_R
+tapcell -distance 5.000 -tapcell_master TAPCELL_ASAP7_75t_R
+proc flush_taps_to_row_ends {master} {
+    set block [ord::get_db_block]
+    set rows [$block getRows]
+    foreach inst [$block getInsts] {
+        if {[[$inst getMaster] getName] ne $master} { continue }
+        lassign [$inst getLocation] x y
+        set w [[$inst getMaster] getWidth]
+        foreach row $rows {
+            set box [$row getBBox]
+            if {$y != [$box yMin] || $x < [$box xMin] || $x + $w > [$box xMax]} { continue }
+            set site [[$row getSite] getWidth]
+            set dx 0
+            if {[$box xMax] - ($x + $w) == $site} { set dx $site }
+            if {$x - [$box xMin] == $site} { set dx [expr {-$site}] }
+            if {$dx != 0} {
+                set status [$inst getPlacementStatus]
+                $inst setPlacementStatus PLACED
+                $inst setLocation [expr {$x + $dx}] $y
+                $inst setPlacementStatus $status
+            }
+        }
+    }
+}
+flush_taps_to_row_ends TAPCELL_ASAP7_75t_R
 
 set physical_delay_cells [get_cells -hierarchical -quiet {physical_delay_*}]
 if {[llength $physical_delay_cells] != 108} { error "PERIPHERY_STRUCTURE: expected 108 named physical delay inverters, found [llength $physical_delay_cells]" }
@@ -85,7 +109,7 @@ puts $structure_fd "dedicated_wordline_buffers [llength $final_wordline_drivers]
 puts $structure_fd "constrained_max_paths [llength $final_paths]"
 close $structure_fd
 report_checks -path_delay min_max -fields {slew capacitance fanout input_pin net} -digits 4 > timing.rpt
-report_checks -to [get_ports -quiet {wlt* wlb*}] -path_delay min_max -fields {slew capacitance fanout input_pin net} -digits 4 > wordline_timing.rpt
+report_checks -to [get_ports -quiet {wlt* wlb* sel_hi_A* sel_hi_B* sel_lo_A* sel_lo_B*}] -path_delay min_max -fields {slew capacitance fanout input_pin net} -digits 4 > wordline_timing.rpt
 report_check_types -max_slew -max_capacitance -max_fanout -violators -verbose > electrical.rpt
 check_setup -verbose > final_setup.rpt
 report_clock_properties > clock_properties.rpt

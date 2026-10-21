@@ -1,0 +1,242 @@
+{
+  "sram_8t_iocolumn|array_x128x4_sram_8t|M1.S": {
+    "count": 1276,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_8t_iocolumn|array_x128x4_sram_8t|M2.S": {
+    "count": 756,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_8t_iocolumn|array_x2x4_sram_8t|M1.S": {
+    "count": 16,
+    "limit_nm": 18.0,
+    "worst_nm": 17.5
+  },
+  "sram_8t_iocolumn|array_x32x4_sram_8t|M1.S": {
+    "count": 316,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_8t_iocolumn|array_x32x4_sram_8t|M2.S": {
+    "count": 180,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_8t_iocolumn|array_x64x4_sram_8t|M1.S": {
+    "count": 636,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_8t_iocolumn|array_x64x4_sram_8t|M2.S": {
+    "count": 372,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_8t_iocolumn|colgrp_half_x128x4_sram_8t|GCUT.S": {
+    "count": 4,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_half_x2x4_sram_8t|GCUT.S": {
+    "count": 4,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_half_x32x4_sram_8t|GCUT.S": {
+    "count": 4,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_half_x64x4_sram_8t|GCUT.S": {
+    "count": 4,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_pair_x128x4_sram_8t|GCUT.S": {
+    "count": 8,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_pair_x2x4_sram_8t|GCUT.S": {
+    "count": 8,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_pair_x32x4_sram_8t|GCUT.S": {
+    "count": 8,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_pair_x64x4_sram_8t|GCUT.S": {
+    "count": 8,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_x128x4_sram_8t|GCUT.S": {
+    "count": 4,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_x128x4_sram_8t|M1.S": {
+    "count": 1272,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_8t_iocolumn|colgrp_x128x4_sram_8t|M2.S": {
+    "count": 744,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_8t_iocolumn|colgrp_x256x4_sram_8t|M1.S": {
+    "count": 2552,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_8t_iocolumn|colgrp_x256x4_sram_8t|M2.S": {
+    "count": 1512,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_8t_iocolumn|colgrp_x2x4_sram_8t|GCUT.S": {
+    "count": 4,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_x32x4_sram_8t|GCUT.S": {
+    "count": 4,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_x4x4_sram_8t|M1.S": {
+    "count": 32,
+    "limit_nm": 18.0,
+    "worst_nm": 17.5
+  },
+  "sram_8t_iocolumn|colgrp_x64x4_sram_8t|GCUT.S": {
+    "count": 4,
+    "limit_nm": 35.0,
+    "worst_nm": 10.0
+  },
+  "sram_8t_iocolumn|colgrp_x64x4_sram_8t|M1.S": {
+    "count": 632,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_8t_iocolumn|colgrp_x64x4_sram_8t|M2.S": {
+    "count": 360,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_8t_iocolumn|sram_cell_8t_b_end|M1.S": {
+    "count": 2,
+    "limit_nm": 18.0,
+    "worst_nm": 17.5
+  },
+  "sram_8t_iocolumn|sram_cell_8t_b|M1.S": {
+    "count": 2,
+    "limit_nm": 18.0,
+    "worst_nm": 17.5
+  },
+  "sram_8t_iocolumn|sram_cell_8t|M1.S": {
+    "count": 2,
+    "limit_nm": 18.0,
+    "worst_nm": 17.5
+  },
+  "sram_8t_iocolumn|sramcol_x128_sram_8t|M1.S": {
+    "count": 319,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_8t_iocolumn|sramcol_x128_sram_8t|M2.S": {
+    "count": 189,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_8t_iocolumn|sramcol_x2_sram_8t|M1.S": {
+    "count": 4,
+    "limit_nm": 18.0,
+    "worst_nm": 17.5
+  },
+  "sram_8t_iocolumn|sramcol_x32_sram_8t|M1.S": {
+    "count": 79,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_8t_iocolumn|sramcol_x32_sram_8t|M2.S": {
+    "count": 45,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_8t_iocolumn|sramcol_x64_sram_8t|M1.S": {
+    "count": 159,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_8t_iocolumn|sramcol_x64_sram_8t|M2.S": {
+    "count": 93,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_cell_8t_edges|dummy_cell_8t|M1.S": {
+    "count": 2,
+    "limit_nm": 18.0,
+    "worst_nm": 17.5
+  },
+  "sram_cell_8t_edges|dummy_vertical_array_X64_8t_lr|M1.S": {
+    "count": 31,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_cell_8t_edges|dummy_vertical_array_X64_8t_lr|M2.S": {
+    "count": 93,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_cell_8t_edges|dummy_vertical_array_X64_8t_v2_lr|M1.S": {
+    "count": 31,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_cell_8t_edges|dummy_vertical_array_X64_8t_v2_lr|M2.S": {
+    "count": 93,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_cell_8t_edges|dummy_vertical_array_X64_8t_v2|M1.S": {
+    "count": 31,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_cell_8t_edges|dummy_vertical_array_X64_8t_v2|M2.S": {
+    "count": 93,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_cell_8t_edges|dummy_vertical_array_X64_8t|M1.S": {
+    "count": 31,
+    "limit_nm": 18.0,
+    "worst_nm": 12.0
+  },
+  "sram_cell_8t_edges|dummy_vertical_array_X64_8t|M2.S": {
+    "count": 93,
+    "limit_nm": 18.0,
+    "worst_nm": 8.0
+  },
+  "sram_cell_8t|sram_cell_8t_b_end|M1.S": {
+    "count": 2,
+    "limit_nm": 18.0,
+    "worst_nm": 17.5
+  },
+  "sram_cell_8t|sram_cell_8t_b|M1.S": {
+    "count": 2,
+    "limit_nm": 18.0,
+    "worst_nm": 17.5
+  },
+  "sram_cell_8t|sram_cell_8t|M1.S": {
+    "count": 2,
+    "limit_nm": 18.0,
+    "worst_nm": 17.5
+  }
+}

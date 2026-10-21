@@ -2,11 +2,12 @@
 #define YOSYS_MANAGER_HPP
 
 #include <map>
+#include <set>
 #include <string>
 #include "main_config_helpers.hpp"
 
 /**
- * Manages Yosys synthesis for open-source ASAP7 flow (single-port).
+ * Manages Yosys synthesis for the open-source ASAP7 single- and dual-port flows.
  * Mirrors SynthesisManager API but emits Yosys script instead of DC TCL.
  */
 class YosysManager {
@@ -20,6 +21,7 @@ public:
     bool verify_periphery_structure();
     bool fix_assign_statements();
     bool predict_capacitance();
+    void predict_6t_loads();
 
     // Paths (mirrors SynthesisManager for reuse by OpenROAD flow)
     std::string get_syn_path() const { return syn_path_; }
@@ -31,6 +33,7 @@ private:
     std::string rtl_path_;
     std::string syn_path_;
     std::map<std::string, double> pin_capacitances_;
+    std::set<std::string> counted_pins_;  // loads counted from the geometry, not predicted
 
     std::string generate_parameter_string() const;
     std::string generate_yosys_script() const;

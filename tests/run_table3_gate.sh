@@ -19,17 +19,13 @@
 # mux-4 part (64-row effective bitline) vs this flow's full-depth sweep, so
 # its numbers are not expected to agree within tolerance.
 #
-# Skips (exit 77) when Xyce is unavailable.
+# Skips (exit 77) when Xyce is unavailable or cannot initialize.
 set -u
 cd "$(dirname "$0")/.."
 REPO="$(pwd)"
 
-XYCE="/home/jeff/iv4/local/xyce-14.4/bin/Xyce"
-[ -x "$XYCE" ] || XYCE="$(command -v Xyce || true)"
-if [ -z "${XYCE:-}" ] || [ ! -x "$XYCE" ]; then
-    echo "SKIP: Xyce not available"
-    exit 77
-fi
+source tests/xyce_gate_common.sh
+require_xyce
 
 BIN=""
 for c in "${OPENFINRAM_BIN:-}" build/OpenFinRAM build/*/OpenFinRAM; do

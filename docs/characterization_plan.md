@@ -1,5 +1,11 @@
 # Timing characterization plan (open-source, no SiliconSmart)
 
+The first whole-macro 8T read-characterization path is implemented in
+[`scripts/characterize_8t.py`](../scripts/characterize_8t.py). See
+[8T Liberty characterization](liberty_8t.md) for commands, measured coverage
+and remaining estimates. The phases below retain the broader timing,
+power and extracted-parasitic goals.
+
 ## Goal
 
 Replace the estimated Liberty that `--skip-characterization` writes today —
@@ -45,7 +51,7 @@ macros is impossible until this plan lands.
 | `... --mode setuphold` | setup/hold on the real ASAP7 `DFFHQNx1` by bisection | works, but measures the **capture-failure boundary**, not the Liberty delay-pushout definition |
 | `... --mode table3` | reproduces the report's stimulus point (40 ps slew, 46.08 fF load) | works |
 | `scripts/gen_table3_report.py` | assembles vendor lib vs report vs estimated vs measured | works — this is the validation harness |
-| Xyce recipe | HSPICE `level 72` -> Xyce `level 110`, emit `NFIN` not `W` | proven |
+| Xyce recipe | HSPICE `level 72` -> Xyce `level 107`, emit `NFIN` not `W` | proven |
 | `tech/models/hspice/7nm_{TT,SS,FF}.pm` | all three corners | present, only TT used |
 
 Gaps, in order of how much error each contributes:
@@ -185,7 +191,9 @@ P5's caching and interpolation are part of the plan and not an afterthought.
 - **`sdel` is programmable** — a Liberty describes one tie-off. Consumers tie
   it to tap 0; characterize that tap, and emit per-tap libs only if a consumer
   asks.
-- **BSIM-CMG syntax:** `level 72` -> `110`, `NFIN` not `W`, strip `W` from the
+- **BSIM-CMG syntax:** `level 72` -> `107` (the card declares `version = 107`;
+  Xyce selects the equations by level and ignores that parameter), `NFIN` not
+  `W`, strip `W` from the
   6T subckts.
 - **Statistical margin is out of scope.** 6T read/write stability is a
   distribution; Vmin and yield need Monte Carlo. This plan produces nominal

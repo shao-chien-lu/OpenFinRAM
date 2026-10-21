@@ -15,6 +15,11 @@ module delay_cell #(
     genvar i;
     generate
         for (i = 0; i < BUF_COUNT; i = i + 1) begin: inv_chain_loop
+            // The controller's pulse sequencing depends on every physical
+            // stage in this chain.  Tag the instances so synthesis can verify
+            // and name exactly this network, and P&R can protect it from
+            // resizing or removal.
+            (* keep, dont_touch, physical_dp_delay *)
             BUFx2_ASAP7_75t_R u_inv (
                 .A(chain_wires[i]),   // input
                 .Y(chain_wires[i+1])  // output

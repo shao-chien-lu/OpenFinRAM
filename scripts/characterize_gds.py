@@ -21,7 +21,7 @@ Deck (one FinFET, BSIM-CMG):
 Simulators:
   * ngspice (default) uses planar stand-in -- harness smoke test, NOT ASAP7
   * Xyce (--simulator xyce) with --real-device and --models 7nm_TT.pm gives
-    real ASAP7 BSIM-CMG numbers (level 72 -> 110, NFIN not W).
+    real ASAP7 BSIM-CMG numbers (level 72 -> 107, NFIN not W).
 
     uv run python scripts/characterize_gds.py --gds nmos_fin_111.gds
     uv run python scripts/characterize_gds.py --gds nmos_fin_111.gds --simulator xyce --real-device --models tech/models/hspice/7nm_TT.pm --mode idvg
@@ -189,9 +189,12 @@ def prep_models(models: Path | None, simulator: str, workdir: Path) -> tuple[str
     if models is None:
         return STANDIN_MODELS, "planar stand-in (NOT ASAP7-accurate)"
     if simulator == "xyce":
+        # Level 107, not 110: the card declares `version = 107` and Xyce
+        # picks the BSIM-CMG equations by level.  See the fuller note in
+        # characterize_read.py::prep_models.
         adapted = workdir / f"{models.stem}_xyce.pm"
-        adapted.write_text(models.read_text().replace("level = 72", "level = 110"))
-        return f".include {adapted}", f"{models.name} -> Xyce BSIM-CMG L110 (real ASAP7)"
+        adapted.write_text(models.read_text().replace("level = 72", "level = 107"))
+        return f".include {adapted}", f"{models.name} -> Xyce BSIM-CMG L107 (real ASAP7)"
     return f".include {models}", f"{models.name} (real device card)"
 
 

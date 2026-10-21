@@ -48,6 +48,8 @@ public:
 
     bool gen_layout();
 
+    bool create_dual_port_macro();
+
     bool create_sram_column();
 
     bool create_sram_array();

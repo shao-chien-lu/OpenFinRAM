@@ -1,0 +1,3 @@
+# ASAP7 device generators for the 8T/6T cell libraries, IO blocks and
+# wordline strips. This commit reproduces tech/gds/digests.json.
+chipforge-asap7 @ git+https://github.com/jeffhsu3/chipforge_asap7@53d27e8ec49cb064c65bfa5246fdedaf768e15c2

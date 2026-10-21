@@ -31,6 +31,7 @@
 
 #include <algorithm>
 #include <cfloat>
+#include <cstdlib>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -54,6 +55,36 @@ int main(int argc, char **argv) {
     // Parse CLI options
     MainCliOptions cli_options = parseMainCliOptions(argc, argv);
 
+    if (!cli_options.liberty_only_lef.empty()) {
+        OpenFinRAM::CharacterizationData data;
+        std::string error;
+        const bool supplied = !cli_options.liberty_from_json.empty();
+        if (supplied && !OpenFinRAM::load_characterization_json(cli_options.liberty_from_json, data, &error)) {
+            LOGE << error;
+            return 1;
+        }
+        if (!OpenFinRAM::export_estimated_liberty(cli_options, cli_options.liberty_only_lef,
+                cli_options.liberty_output, &error, supplied ? &data : nullptr)) {
+            LOGE << error;
+            return 1;
+        }
+        return 0;
+    }
+
+    // The 2RW and generated 6T macros are built from generated cell libraries
+    // (tech/gds, scripts/tech_gds.py), which the build writes; write any that
+    // are missing, as a run straight from a checkout has none.
+    if (!cli_options.single_port || cli_options.bitcell_6t) {
+        const std::string root = get_current_dir_name();
+        const std::string venv = join_path(root, ".venv/bin/python");
+        const std::string command = (file_exists(venv) ? "'" + venv + "'" : std::string("python3"))
+            + " '" + join_path(root, "scripts/tech_gds.py") + "' --if-missing";
+        if (std::system(command.c_str()) != 0) {
+            LOGE << "Cannot generate the cell libraries in tech/gds: " << command;
+            return 1;
+        }
+    }
+
     // Generate SPICE netlist
     LOGI << "=== Generating SPICE Netlist ===";
     OpenFinRAM::SpiceGenerator gen(cli_options);
@@ -66,7 +97,9 @@ int main(int argc, char **argv) {
 
     // Run synthesis flow (open-source Yosys or commercial Design Compiler)
     if (cli_options.use_yosys || cli_options.openroad_only) {
-        LOGI << "=== Running Yosys Synthesis (OpenROAD single-port ASAP7) ===";
+        LOGI << "=== Running Yosys Synthesis (OpenROAD ASAP7"
+             << (cli_options.single_port ? " single-port"
+                 : cli_options.bitcell_6t ? " single-port 6T" : " dual-port") << ") ===";
         YosysManager yosys_manager(cli_options);
         if (!yosys_manager.run_synthesis()) {
             LOGE << "Yosys periphery synthesis/signoff failed.";
@@ -81,7 +114,10 @@ int main(int argc, char **argv) {
 
     // Run P&R flow (OpenROAD or Innovus)
     if (cli_options.use_openroad || cli_options.openroad_only) {
-        LOGI << "=== Running OpenROAD P&R (single-port ASAP7, platform/asap7) ===";
+        LOGI << "=== Running OpenROAD P&R ("
+             << (cli_options.single_port ? "single-port"
+                 : cli_options.bitcell_6t ? "single-port 6T" : "dual-port")
+             << " ASAP7, platform/asap7) ===";
         OpenRoadManager openroad_manager(cli_options);
         if (!openroad_manager.run_openroad_flow()) {
             LOGE << "OpenROAD periphery implementation/STA failed.";
@@ -97,6 +133,8 @@ int main(int argc, char **argv) {
     SpiceIntegrator integrator(cli_options);
     if (!integrator.integrate_sram()) {
         LOGW << "SRAM integration failed, skipping.";
+        if (!cli_options.single_port && (cli_options.use_openroad || cli_options.openroad_only))
+            return 1;
     }
 
     // Run siliconsmart characterization
@@ -147,11 +185,37 @@ int main(int argc, char **argv) {
         std::string liberty_error;
         OpenFinRAM::CharacterizationData char_data;
         OpenFinRAM::CharacterizationData* char_ptr = nullptr;
-        if (!cli_options.liberty_from_json.empty()) {
+        std::string liberty_from = cli_options.liberty_from_json;
+        // The 6T macro's timing and energy follow its size: with no measured
+        // JSON, scripts/timing_model_6t.py estimates them for this geometry
+        // from the model fit to whole-macro simulations (tech/timing/).
+        const std::string model = "tech/timing/sram_6t_timing.json";
+        if (liberty_from.empty() && cli_options.bitcell_6t && file_exists(model)) {
+            const std::string local_python = ".venv/bin/python";
+            const std::string estimate = result_dir + "/" + cell_name + ".timing.json";
+            const std::string command =
+                (file_exists(local_python) ? local_python : std::string("python3")) +
+                " scripts/timing_model_6t.py estimate --model " + model +
+                " --wordlines " + std::to_string(cli_options.num_wls) +
+                " --bits " + std::to_string(cli_options.num_data_bits) +
+                " --mux " + std::to_string(cli_options.num_rows_per_mux) +
+                " --segment-bits " + std::to_string(cli_options.segment_bits) +
+                " --output '" + estimate + "' > /dev/null";
+            if (std::system(command.c_str()) == 0) {
+                liberty_from = estimate;
+            } else {
+                LOGW << "6T timing model estimate failed; keeping the estimated constants";
+            }
+        }
+        if (!liberty_from.empty()) {
             if (OpenFinRAM::load_characterization_json(
-                    cli_options.liberty_from_json, char_data, &liberty_error)) {
+                    liberty_from, char_data, &liberty_error)) {
                 char_ptr = &char_data;
             } else {
+                if (!cli_options.liberty_from_json.empty()) {
+                    LOGE << "Requested characterization JSON is invalid: " << liberty_error;
+                    return 1;
+                }
                 LOGW << "Characterization JSON load failed, falling back to "
                         "estimated constants: " << liberty_error;
             }
@@ -163,6 +227,8 @@ int main(int argc, char **argv) {
                 &liberty_error,
                 char_ptr)) {
             LOGW << "Estimated Liberty export failed: " << liberty_error;
+            if (!cli_options.single_port && (cli_options.use_openroad || cli_options.openroad_only))
+                return 1;
         }
     }
 }

@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <limits>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -13,7 +14,7 @@ using Table2D = std::vector<std::vector<double>>;
 
 // clk -> Q arc, mirrors the lu_table_templates emitted by
 // liberty_estimator.cpp (input_net_transition x total_output_net_capacitance
-// for delays; total_output_net_capacitance alone for transitions).
+// for delays and version-2 transitions; legacy transitions use load alone).
 struct CharacterizationDelay {
     bool present = false;
     std::vector<double> index_1;  // input_net_transition
@@ -22,6 +23,9 @@ struct CharacterizationDelay {
     Table2D cell_fall;
     std::vector<double> rise_transition;
     std::vector<double> fall_transition;
+    // Version 2: transitions may use the same slew x load grid as delays.
+    Table2D rise_transition_2d;
+    Table2D fall_transition_2d;
 };
 
 // Setup/hold constraints against clk (related_pin_transition x
@@ -38,6 +42,7 @@ struct CharacterizationConstraints {
 
 struct CharacterizationTiming {
     CharacterizationDelay delay;
+    std::map<std::string, CharacterizationDelay> port_delays;
     CharacterizationConstraints constraints;
 };
 
@@ -52,8 +57,9 @@ struct CharacterizationData {
     double clk_capacitance = std::numeric_limits<double>::quiet_NaN();
     double default_input_pin_capacitance = std::numeric_limits<double>::quiet_NaN();
     double output_max_capacitance = std::numeric_limits<double>::quiet_NaN();
-    // Non-empty replaces the "ESTIMATED EARLY-PPA MODEL" library comment.
+    // Non-empty replaces the default comment; describe any remaining estimates.
     std::string comment;
+    std::string cell;
     CharacterizationTiming timing;
 
     // Corner identity for the emitted library. Absent fields keep the

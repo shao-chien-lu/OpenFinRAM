@@ -8,7 +8,7 @@
 namespace OpenFinRAM {
 
 /**
- * Write an explicitly estimated, single-port SRAM Liberty model.
+ * Write an explicitly estimated single- or dual-port SRAM Liberty model.
  *
  * The model is intended for early synthesis/STA integration when transistor-
  * level characterization is skipped or unavailable. Timing values follow a

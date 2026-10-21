@@ -260,15 +260,45 @@ bool parse_delay(const JValue& obj, CharacterizationDelay& out, std::string* err
         return false;
     }
     const size_t r = out.index_1.size(), c = out.index_2.size();
+    auto valid_axis = [](const std::vector<double>& axis) {
+        if (axis.empty()) return false;
+        for (size_t i = 0; i < axis.size(); ++i) {
+            if (!std::isfinite(axis[i]) || axis[i] <= 0 || (i && axis[i] <= axis[i - 1]))
+                return false;
+        }
+        return true;
+    };
+    if (!valid_axis(out.index_1) || !valid_axis(out.index_2)) {
+        if (error) *error = "delay axes must be nonempty, positive and strictly increasing";
+        return false;
+    }
     if (!get_matrix(obj, "cell_rise", out.cell_rise, r, c) ||
         !get_matrix(obj, "cell_fall", out.cell_fall, r, c)) {
         if (error) *error = "cell_rise/cell_fall must be index_1 x index_2 matrices";
         return false;
     }
-    if (!get_vector(obj, "rise_transition", out.rise_transition) ||
+    if (get_matrix(obj, "rise_transition", out.rise_transition_2d, r, c) &&
+        get_matrix(obj, "fall_transition", out.fall_transition_2d, r, c)) {
+        // Both transitions are two-dimensional.
+    } else if (!get_vector(obj, "rise_transition", out.rise_transition) ||
         !get_vector(obj, "fall_transition", out.fall_transition) ||
         out.rise_transition.size() != c || out.fall_transition.size() != c) {
-        if (error) *error = "rise/fall_transition must have one entry per index_2 point";
+        if (error) *error = "rise/fall_transition must both be load vectors or slew x load matrices";
+        return false;
+    } else {
+        out.rise_transition_2d.clear();
+        out.fall_transition_2d.clear();
+    }
+    auto valid_values = [](const Table2D& table) {
+        for (const auto& row : table)
+            for (double v : row)
+                if (!std::isfinite(v) || v < 0) return false;
+        return true;
+    };
+    if (!valid_values(out.cell_rise) || !valid_values(out.cell_fall) ||
+        !valid_values(out.rise_transition_2d) || !valid_values(out.fall_transition_2d) ||
+        !valid_values({out.rise_transition, out.fall_transition})) {
+        if (error) *error = "delay and transition values must be finite and nonnegative";
         return false;
     }
     out.present = true;
@@ -298,8 +328,19 @@ bool parse_timing(const JValue& timing_obj, CharacterizationTiming& out,
                   std::string* error) {
     if (const JValue* d = timing_obj.find("delay")) {
         if (!parse_delay(*d, out.delay, error)) return false;
-    } else {
-        if (error) *error = "timing block missing 'delay'";
+    }
+    if (const JValue* ports = timing_obj.find("port_delays")) {
+        if (ports->type != JValue::OBJ || ports->object.size() != 2 ||
+            !ports->find("A") || !ports->find("B")) {
+            if (error) *error = "port_delays must contain exactly A and B";
+            return false;
+        }
+        for (const char* port : {"A", "B"}) {
+            if (!parse_delay(*ports->find(port), out.port_delays[port], error)) return false;
+        }
+    }
+    if (!out.delay.present && out.port_delays.empty()) {
+        if (error) *error = "timing block needs 'delay' or 'port_delays'";
         return false;
     }
     if (const JValue* c = timing_obj.find("constraints")) {
@@ -332,6 +373,23 @@ bool load_characterization_json(const std::string& path,
     if (root.type != JValue::OBJ) {
         if (error) *error = "Characterization JSON root must be an object";
         return false;
+    }
+
+    out = CharacterizationData{};
+    if (const JValue* schema = root.find("schema")) {
+        if (schema->type != JValue::STR ||
+            (schema->string != "openfinram-characterization-1" &&
+             schema->string != "openfinram-characterization-2")) {
+            if (error) *error = "Unsupported characterization schema";
+            return false;
+        }
+    }
+    if (const JValue* cell = root.find("cell")) {
+        if (cell->type != JValue::STR || cell->string.empty()) {
+            if (error) *error = "cell must be a nonempty string";
+            return false;
+        }
+        out.cell = cell->string;
     }
 
     double num = 0;

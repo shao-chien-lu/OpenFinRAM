@@ -69,7 +69,8 @@ std::string SynthesisManager::generate_tcl_content() const {
         << "\n"
 
         << "# Analyze and elaborate\n"
-        << "analyze -f sverilog {sram_control.v delay_cell.v}\n"
+        << "analyze -f sverilog {sram_control.v delay_cell.v"
+        << (cli_options_.single_port ? "" : " row_decoder.v") << "}\n"
         << "elaborate ctrl_decode -parameters \"" << generate_parameter_string() << "\"\n"
         << "rename_design [current_design] ctrl_decode\n"
         << "link\n\n"
@@ -271,9 +272,12 @@ bool SynthesisManager::predict_capacitance() {
         signal_map["WRENA"] = {"wrena", "wrenan"};
         signal_map["SAE"] = {"sae", "saprechn", "oeb_out", "oe_out"};
     } else {
-        signal_map["WLT"] = {"wlt_A", "wlt_B", "wlb_A", "wlb_B"};
-        signal_map["YSELT"] = {"yselt_A", "yseltn_A", "yselb_A", "yselbn_A", "yselt_B", "yseltn_B", "yselb_B", "yselbn_B"};
-        signal_map["BLPRECHTN"] = {"blprechtn_A", "blprechbn_A", "blprechtn_B", "blprechbn_B"};
+        // The wordlines are driven by the slice strips at the array; the
+        // controller's predecode lines fan out to the slices like a column
+        // select does to its columns.
+        signal_map["YSELT"] = {"ysel_A", "yseln_A", "ysel_B", "yseln_B",
+                               "sel_hi_A", "sel_hi_B", "sel_lo_A", "sel_lo_B"};
+        signal_map["BLPRECHTN"] = {"blprechn_A", "blprechn_B"};
         signal_map["WRENA"] = {"wrena_A", "wrenan_A"};
         signal_map["SAE"] = {"sae_A", "sae_B", "oeb_out_A", "oe_out_A", "oeb_out_B", "oe_out_B"};
     }

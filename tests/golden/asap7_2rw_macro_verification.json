@@ -1,0 +1,19 @@
+{
+ "lvs_matched": true,
+ "series_order_cells": [
+  "AO21x1_ASAP7_75t_R"
+ ],
+ "supply_shorts": [],
+ "supply_shorts_without_double_implant_taps": [],
+ "drc_rules": {
+  "M1.S.2": 238,
+  "M2.S.2": 212,
+  "V0.M1.AUX.3": 3,
+  "V1.M1.EN.1": 4
+ },
+ "drc_identity": {
+  "engine": "gdscheck",
+  "suite": "main",
+  "version": "gdscheck 0.2.0"
+ }
+}

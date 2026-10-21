@@ -1,0 +1,101 @@
+# ASAP7 device-level DRC for OpenFinRAM's handcrafted cells.
+#
+# This is a CONSERVATIVE SUBSET, not a signoff deck.  ASAP7's real DRM is not
+# redistributable, so most thresholds here are derived by measuring the tightest
+# geometry the published ASAP7 libraries in tech/gds actually draw, then
+# calibrated: the deck is required to run clean on the vendor's own SRAM cells.
+# A violation therefore means "this shape is tighter than anything the
+# published library does", which is a strong signal without inventing a rule.
+#
+# Re-derive with scripts/derive_asap7_drc_rules.rb after changing the source
+# libraries.  Rules the vendor cells themselves fail must be dropped, not
+# loosened to fit.
+#
+# GCUT follows the public ASAP7 GCUT.W.1 and GCUT.S.3 rules: 17 nm vertical
+# width and 35 nm vertically projected spacing. Diagonally staggered cuts
+# have no facing horizontal edges and must not be measured corner to corner.
+# This also matches gdscheck's native ASAP7 deck (params: facing: y).
+#
+# Two thresholds deliberately disagree with a whole-library measurement.
+# Measured over every cell in srambank_32b_boundary_2.gds, M1 space bottoms out
+# at 6 nm and M3 space at 15 nm, but those come from the standard-cell-derived
+# ctrl_decode geometry, which follows different rules than the SRAM cells.
+# Every vendor SRAM cell is clean at 18 nm, so the deck keeps 18 and the
+# calibration step in tests/run_8t_device_drc_check.sh enforces that.
+#
+# Run:  klayout -b -r tech/drc/asap7_device.drc -rd gds=<file> [-rd cells=a,b]
+
+WIDTH_SPACE = {
+  2  => ["FIN",    0.007, 0.020],
+  7  => ["GATE",   0.020, 0.034],
+  10 => ["GCUT",   0.017, 0.035],
+  11 => ["ACTIVE", 0.016, 0.027],
+  16 => ["LIG",    0.016, 0.019],
+  17 => ["LISD",   0.024, 0.018],
+  19 => ["M1",     0.018, 0.018],
+  20 => ["M2",     0.018, 0.018],
+  30 => ["M3",     0.018, 0.018],
+  40 => ["M4",     0.024, 0.024],
+  50 => ["M5",     0.024, 0.024],
+}
+WIDTH_ONLY = {
+  18 => ["V0", 0.018], 21 => ["V1", 0.018], 25 => ["V2", 0.018],
+  35 => ["V3", 0.018], 45 => ["V4", 0.024], 55 => ["V5", 0.024],
+}
+
+layout = RBA::Layout.new
+layout.read($gds)
+if $cells && !$cells.empty?
+  names = $cells.split(",")
+else
+  names = []
+  layout.each_cell { |c| names << c.name }
+  names.sort!
+end
+dbu = layout.dbu
+findings = []
+
+names.each do |name|
+  cell = layout.cell(name)
+  next if cell.nil?
+  (WIDTH_SPACE.keys + WIDTH_ONLY.keys).each do |lnum|
+    li = layout.find_layer(RBA::LayerInfo.new(lnum, 0))
+    next if li.nil?
+    region = RBA::Region.new(cell.begin_shapes_rec(li))
+    region.merge
+    next if region.is_empty?
+    checks = []
+    if WIDTH_SPACE.key?(lnum)
+      label, w, s = WIDTH_SPACE[lnum]
+      if label == "GCUT"
+        width = region.width_check((w / dbu).round, false, RBA::Region::Projection).with_angle(0, false)
+        space = region.space_check((s / dbu).round, false, RBA::Region::Projection).with_angle(0, false)
+        checks << ["#{label}.W", w, width]
+        checks << ["#{label}.S", s, space]
+      else
+        checks << ["#{label}.W", w, region.width_check((w / dbu).round)]
+        checks << ["#{label}.S", s, region.space_check((s / dbu).round)]
+      end
+    else
+      label, w = WIDTH_ONLY[lnum]
+      checks << ["#{label}.W", w, region.width_check((w / dbu).round)]
+    end
+    checks.each do |rule, limit, pairs|
+      next if pairs.count == 0
+      worst = nil
+      pairs.each { |p| worst = p.distance if worst.nil? || p.distance < worst }
+      findings << { "cell" => name, "rule" => rule, "count" => pairs.count,
+                    "worst_nm" => (worst * dbu * 1000).round(3),
+                    "limit_nm" => (limit * 1000).round(3) }
+    end
+  end
+end
+
+findings.sort_by! { |f| [f["cell"], f["rule"]] }
+body = findings.collect do |f|
+  "    {\"cell\": \"#{f["cell"]}\", \"rule\": \"#{f["rule"]}\", " \
+  "\"count\": #{f["count"]}, \"worst_nm\": #{f["worst_nm"]}, " \
+  "\"limit_nm\": #{f["limit_nm"]}}"
+end
+puts "{\n  \"gds\": \"#{$gds}\",\n  \"cells_checked\": #{names.size},\n" \
+     "  \"findings\": [\n#{body.join(",\n")}\n  ]\n}"

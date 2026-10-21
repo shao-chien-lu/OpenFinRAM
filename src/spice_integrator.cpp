@@ -1,7 +1,9 @@
 #include "spice_integrator.hpp"
+#include "spice_generator.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cctype>
 #include <sys/stat.h>
 #include <algorithm>
 #include <regex>
@@ -231,10 +233,19 @@ std::string SpiceIntegrator::generate_subckt_header() const {
         }
         oss << "\n+";
 
-        oss << " ce_n_B oe_n_B"
+        // The generated single-port macro is port A alone.
+        if (cli_options_.bitcell_6t) {
+            oss << "\n\n";
+            return oss.str();
+        }
+        oss << " ce_n_B we_n_B oe_n_B"
             << "\n+";
         for (uint64_t i = 0; i < get_addr_width(cli_options_); ++i) {
             oss << " A_B[" << i << "]";
+        }
+        oss << "\n+";
+        for (uint64_t i = 0; i < cli_options_.num_data_bits; ++i) {
+            oss << " D_B[" << i << "]";
         }
         oss << "\n+";
         for (uint64_t i = 0; i < cli_options_.num_data_bits; ++i) {
@@ -288,11 +299,25 @@ std::string SpiceIntegrator::generate_ctrl_instance(
 
 std::string SpiceIntegrator::generate_datapath_instance() const {
     std::ostringstream oss;
-    
-    for (int top_bottom = 0; top_bottom < 2; ++top_bottom) {
+    // Divided wordlines (--segment-bits): each half is its segments, each
+    // segment's tiles their own instance on their own wordline bus.
+    const unsigned segments = cli_options_.single_port ? 1 : cli_options_.wordline_segments();
+    const uint64_t seg_bits = cli_options_.single_port ? cli_options_.num_data_bits / 2
+                                                       : cli_options_.wordline_segment_bits();
 
+    for (int top_bottom = 0; top_bottom < 2; ++top_bottom) {
+    for (unsigned seg = 0; seg < segments; ++seg) {
+        const std::string suffix = segments > 1 ? "_s" + std::to_string(seg) : "";
+        const uint64_t first_bit = top_bottom * (cli_options_.num_data_bits / 2) + seg * seg_bits;
+
+        // The two halves of the data bits.  In the two-port macro they are
+        // the stacks below (`lo`) and above (`hi`) the controller band, each
+        // with its own wordlines from its own driver strips.
+        const char* half = cli_options_.single_port
+            ? (top_bottom == 0 ? "top" : "bottom")
+            : (top_bottom == 0 ? "lo" : "hi");
         oss << "** Instantiate SRAM Datapath\n"
-            << "Xdata_" << (top_bottom == 0 ? "top " : "bottom ");
+            << "Xdata_" << half << suffix << " ";
         
         for (int bank = 0; bank < cli_options_.num_banks; ++bank) {
             if (cli_options_.single_port) {
@@ -306,27 +331,17 @@ std::string SpiceIntegrator::generate_datapath_instance() const {
                 }
                 oss << "\n+";
             } else {
-                // Wordlines (top)
-                for (uint64_t i = 0; i < cli_options_.num_wls; ++i) {
-                    oss << " wlt_a[" << i + bank * cli_options_.num_wls << "]";
+                // One unsplit array per column: 2*NUM_WL wordlines a bank,
+                // driven by this half's strips.
+                const uint64_t rows = 2 * cli_options_.num_wls;
+                const std::vector<const char*> ports = cli_options_.bitcell_6t
+                    ? std::vector<const char*>{"a"} : std::vector<const char*>{"a", "b"};
+                for (const char* port : ports) {
+                    for (uint64_t i = 0; i < rows; ++i) {
+                        oss << " wl_" << port << "_" << half << suffix << "[" << i + bank * rows << "]";
+                    }
+                    oss << "\n+";
                 }
-                oss << "\n+";
-                
-                for (uint64_t i = 0; i < cli_options_.num_wls; ++i) {
-                    oss << " wlt_b[" << i + bank * cli_options_.num_wls << "]";
-                }
-                oss << "\n+";
-
-                // Wordlines (bottom)
-                for (uint64_t i = 0; i < cli_options_.num_wls; ++i) {
-                    oss << " wlb_a[" << i + bank * cli_options_.num_wls << "]";
-                }
-                oss << "\n+";
-
-                for (uint64_t i = 0; i < cli_options_.num_wls; ++i) {
-                    oss << " wlb_b[" << i + bank * cli_options_.num_wls << "]";
-                }
-                oss << "\n+";
             }
         }
 
@@ -342,17 +357,22 @@ std::string SpiceIntegrator::generate_datapath_instance() const {
             }
             oss << "\n+";
         } else {
-            for (uint64_t i = 0; i < cli_options_.num_data_bits / 2; ++i) {
-                oss << " D_A[" << i + top_bottom * (cli_options_.num_data_bits / 2) << "]";
+            for (uint64_t i = 0; i < seg_bits; ++i) {
+                oss << " D_A[" << i + first_bit << "]";
             }
             oss << "\n+";
 
-            for (uint64_t i = 0; i < cli_options_.num_data_bits / 2; ++i) {
-                oss << " Q_A[" << i + top_bottom * (cli_options_.num_data_bits / 2) << "]";
+            for (uint64_t i = 0; i < seg_bits; ++i) {
+                oss << " Q_A[" << i + first_bit << "]";
             }
             oss << "\n+";
 
-            for (uint64_t i = 0; i < cli_options_.num_data_bits / 2; ++i) {
+            for (uint64_t i = 0; !cli_options_.bitcell_6t && i < cli_options_.num_data_bits / 2; ++i) {
+                oss << " D_B[" << i + top_bottom * (cli_options_.num_data_bits / 2) << "]";
+            }
+            oss << "\n+";
+
+            for (uint64_t i = 0; !cli_options_.bitcell_6t && i < cli_options_.num_data_bits / 2; ++i) {
                 oss << " Q_B[" << i + top_bottom * (cli_options_.num_data_bits / 2) << "]";
             }
             oss << "\n+";
@@ -364,16 +384,23 @@ std::string SpiceIntegrator::generate_datapath_instance() const {
                 "wrena", "wrenan", "saprechn", "sae", "oeb_out", "oe_out",
                 "blprechtn", "blprechbn"
             };
+        } else if (cli_options_.bitcell_6t) {
+            ctrl_sigs = {"wrena_A", "wrenan_A", "oeb_out_A", "oe_out_A", "blprechn_A", "sae_A"};
         } else {
             ctrl_sigs = {
-                "wrena_A", "wrenan_A",
+                "wrena_A", "wrenan_A", "wrena_B", "wrenan_B",
                 "oeb_out_A", "oe_out_A", "oeb_out_B", "oe_out_B",
-                "blprechtn_A", "blprechbn_A", "blprechtn_B", "blprechbn_B",
+                "blprechn_A", "blprechn_B",
                 "sae_A", "sae_B"
             };
         }
         for (const auto& sig : ctrl_sigs) {
-            for (int bank = 0; bank < cli_options_.num_banks; ++bank) {
+            // Shared, port B's enables are the controller's one per pair of
+            // banks (SHARED_B); its precharges stay one per bank.
+            const bool per_pair = cli_options_.share_port_b && sig != "blprechn_B" &&
+                                  sig.size() > 2 && sig.compare(sig.size() - 2, 2, "_B") == 0;
+            const int count = per_pair ? cli_options_.num_banks / 2 : cli_options_.num_banks;
+            for (int bank = 0; bank < count; ++bank) {
                 oss << " " << sig << "[" << bank << "]";
             }
 
@@ -407,59 +434,91 @@ std::string SpiceIntegrator::generate_datapath_instance() const {
                 oss << "\n+";
             }
         } else {
-            // yseltn
-            for (int bank = 0; bank < cli_options_.num_banks * 4; ++bank) {
-                oss << " yseltn_A[" << bank << "]";
+            const std::vector<const char*> buses = cli_options_.bitcell_6t
+                ? std::vector<const char*>{"yseln_A", "ysel_A"}
+                : std::vector<const char*>{"yseln_A", "ysel_A", "yseln_B", "ysel_B"};
+            // A bank's select bus: a line a column, or for the 6T block at
+            // 16:1 the two predecoded groups (the controller's YSEL_W).
+            const int mux = static_cast<int>(cli_options_.num_rows_per_mux);
+            const int ysel_w = cli_options_.bitcell_6t && mux >= 16 ? 4 + mux / 4 : mux;
+            for (const char* bus : buses) {
+                for (int index = 0; index < static_cast<int>(cli_options_.num_banks) * ysel_w; ++index) {
+                    oss << " " << bus << "[" << index << "]";
+                }
+                oss << "\n+";
             }
-            oss << "\n+";
-
-            // yselt
-            for (int bank = 0; bank < cli_options_.num_banks * 4; ++bank) {
-                oss << " yselt_A[" << bank << "]";
-            }
-            oss << "\n+";
-
-            // yselbn
-            for (int bank = 0; bank < cli_options_.num_banks * 4; ++bank) {
-                oss << " yselbn_A[" << bank << "]";
-            }
-            oss << "\n+";
-
-            // yselb
-            for (int bank = 0; bank < cli_options_.num_banks * 4; ++bank) {
-                oss << " yselb_A[" << bank << "]";
-            }
-            oss << "\n+";
-
-
-            for (int bank = 0; bank < cli_options_.num_banks * 4; ++bank) {
-                oss << " yseltn_B[" << bank << "]";
-            }
-            oss << "\n+";
-
-            for (int bank = 0; bank < cli_options_.num_banks * 4; ++bank) {
-                oss << " yselt_B[" << bank << "]";
-            }
-            oss << "\n+";
-
-            for (int bank = 0; bank < cli_options_.num_banks * 4; ++bank) {
-                oss << " yselbn_B[" << bank << "]";
-            }
-            oss << "\n+";
-
-
-            for (int bank = 0; bank < cli_options_.num_banks * 4; ++bank) {
-                oss << " yselb_B[" << bank << "]";
-            }
-            oss << "\n+";
         }
         
         // Control signals and power
         oss << " VDD VSS\n"
             << "+ stacked_colgrp_x"<< cli_options_.num_wls * 2 
-            << "x" << cli_options_.num_data_bits / 2 << "x" << cli_options_.num_banks << "\n\n";
+            << "x" << seg_bits << "x" << cli_options_.num_banks << "\n\n";
+    }
     }
 
+    return oss.str();
+}
+
+// Two-port only: a pair of wordline driver strips (port A's and port B's) on
+// each side of the controller band, per bank.  The controller's
+// sel_hi_<P>[bank][k] is slice k's SEL (one-hot of the wordline index's high
+// bits, gated by the wordline phase) and sel_lo_<P>[j] the B<j> shared by
+// every slice (one-hot of its low two bits); the pair's WL_<P>[i] is wordline
+// i of that bank in that half.
+std::string SpiceIntegrator::generate_wordline_strip_instances() const {
+    std::ostringstream oss;
+    if (cli_options_.single_port) return oss.str();
+    const uint64_t rows = 2 * cli_options_.num_wls;
+    const uint64_t slices = rows / 4;
+    OpenFinRAM::SpiceGenerator generator(cli_options_);
+    // With divided wordlines the band's strips drive the segment next to the
+    // band (the lower stack's last, the upper's first), and a mid pair under
+    // each other segment of a stack drives it (up) and the one below (down).
+    const unsigned segments = cli_options_.wordline_segments();
+    auto bus = [segments](char port, const char* half, unsigned seg) {
+        return std::string("wl_") + port + "_" + half + (segments > 1 ? "_s" + std::to_string(seg) : "");
+    };
+    oss << "** Instantiate the wordline driver strips\n";
+    for (const char* half : {"lo", "hi"}) {
+        const unsigned band_seg = std::string(half) == "lo" ? segments - 1 : 0;
+        for (int bank = 0; bank < cli_options_.num_banks; ++bank) {
+            oss << "Xwl_" << half << "_" << bank;
+            const std::vector<const char*> ports = cli_options_.bitcell_6t
+                ? std::vector<const char*>{"A"} : std::vector<const char*>{"A", "B"};
+            for (const char* port : ports) {
+                for (uint64_t k = 0; k < slices; ++k) {
+                    oss << " sel_hi_" << port << "[" << bank * slices + k << "]";
+                }
+                oss << "\n+";
+                for (int j = 0; j < 4; ++j) {
+                    oss << " sel_lo_" << port << "[" << j << "]";
+                }
+                oss << "\n+";
+                for (uint64_t i = 0; i < rows; ++i) {
+                    oss << " " << bus(static_cast<char>(std::tolower(port[0])), half, band_seg)
+                        << "[" << i + bank * rows << "]";
+                    if (i % 8 == 7 && i + 1 < rows) oss << "\n+";
+                }
+                oss << "\n+";
+            }
+            oss << " VDD VSS " << generator.wordline_strip_pair_name(half) << "\n";
+            for (unsigned seg = 1; seg < segments; ++seg) {
+                for (const char* side : {"d", "u"}) {
+                    oss << "Xwl_" << half << "_m" << seg << side << "_" << bank;
+                    for (uint64_t k = 0; k < slices; ++k) oss << " sel_hi_A[" << bank * slices + k << "]";
+                    for (int j = 0; j < 4; ++j) oss << " sel_lo_A[" << j << "]";
+                    oss << "\n+";
+                    const unsigned target = side[0] == 'd' ? seg - 1 : seg;
+                    for (uint64_t i = 0; i < rows; ++i) {
+                        oss << " " << bus('a', half, target) << "[" << i + bank * rows << "]";
+                        if (i % 8 == 7 && i + 1 < rows) oss << "\n+";
+                    }
+                    oss << "\n+ VDD VSS " << generator.wordline_strip_name() << "\n";
+                }
+            }
+        }
+    }
+    oss << "\n";
     return oss.str();
 }
 
@@ -577,6 +636,12 @@ bool SpiceIntegrator::replace_chars_for_sis(const std::string& input_path, const
     return true;
 }
 
+std::string single_port_names(const std::string& text) {
+    static const std::regex enable(R"((^|\s)(ce|we|oe)_n_A(?=\s|$))");
+    static const std::regex bus(R"((^|\s)([ADQ])_A\[)");
+    return std::regex_replace(std::regex_replace(text, enable, "$1$2_n"), bus, "$1$2[");
+}
+
 bool SpiceIntegrator::integrate_sram() {
     // Mkdir results directory if it doesn't exist
     std::string results_dir = join_path(get_current_dir_name(), "results");
@@ -655,10 +720,13 @@ bool SpiceIntegrator::integrate_sram() {
     
     // Write sections
     outfile << generate_header(ctrl_netlist_path, datapath_netlist_path);
-    outfile << generate_subckt_header();
-    outfile << generate_ctrl_instance(ctrl_ports);
-    outfile << generate_datapath_instance();
-    outfile << generate_footer();
+    std::string top = generate_subckt_header() + generate_ctrl_instance(ctrl_ports) +
+                      generate_datapath_instance() + generate_wordline_strip_instances() +
+                      generate_footer();
+    // The generated single-port macro is port A of the two-port machinery
+    // inside; at its boundary it has no port: ce_n, we_n, oe_n, A[], D[], Q[].
+    if (cli_options_.bitcell_6t) top = single_port_names(top);
+    outfile << top;
     
     outfile.close();
     
@@ -683,6 +751,12 @@ bool SpiceIntegrator::integrate_sram() {
     if (!replace_chars_for_sis(flattened_output_path, sis_ready_output_path)) {
         LOGE << "  ✗ Error: Character replacement for SIS failed";
         return false;
+    }
+
+    // Deliver a self-contained structural deck, not references into tmp/.
+    // Device model cards remain supplied by the simulation testbench.
+    if (!cli_options_.single_port && (cli_options_.use_openroad || cli_options_.openroad_only)) {
+        if (!copy_file(flattened_output_path, output_file_path)) return false;
     }
     
     return true;

@@ -28,6 +28,8 @@ public:
         const std::string& tech_lib_path);
 
     // Build the Yosys synthesis script content
+    // single_port=true preserves the historical single-port path (SP goldens)
+    // single_port=false emits the dual-port 8T path (tech/verilog_dp).
     std::string generate_script(
         const std::string& rtl_path,
         const std::string& syn_path,
@@ -41,7 +43,16 @@ public:
         double abc_load_ff,
         double abc_delay_ps,
         const std::string& platform_path,
-        const std::string& tech_lib_path) const;
+        const std::string& tech_lib_path,
+        bool single_port = true,
+        // Two-port only: banks share port B's IO block in pairs (SHARED_B).
+        bool shared_port_b = false,
+        // The generated single-port macro: port A's controller alone
+        // (tech/verilog_dp/sram_control_1p.v).
+        bool one_port = false,
+        // Slice-driven macros: address bits per sel_hi predecode group
+        // (ROW_PREDECODE); 3 is the RTL's default and is not set.
+        unsigned row_predecode_bits = 3) const;
 };
 
 } // namespace OpenFinRAM

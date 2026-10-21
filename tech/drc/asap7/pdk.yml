@@ -1,0 +1,26 @@
+# OpenFinRAM's calibrated subset, NOT the full ASAP7 rule manual.
+# Threshold provenance and reference implementation: ../asap7_device.drc.
+name: OpenFinRAM ASAP7 device subset
+version: "2"
+decks:
+  - name: device
+    path: device.json
+    description: Calibrated width, spacing and notch checks (micrometres)
+layers:
+  - {name: FIN, gds_layer: 2, gds_datatype: 0}
+  - {name: GATE, gds_layer: 7, gds_datatype: 0}
+  - {name: GCUT, gds_layer: 10, gds_datatype: 0}
+  - {name: ACTIVE, gds_layer: 11, gds_datatype: 0}
+  - {name: LIG, gds_layer: 16, gds_datatype: 0}
+  - {name: LISD, gds_layer: 17, gds_datatype: 0}
+  - {name: M1, gds_layer: 19, gds_datatype: 0}
+  - {name: M2, gds_layer: 20, gds_datatype: 0}
+  - {name: M3, gds_layer: 30, gds_datatype: 0}
+  - {name: M4, gds_layer: 40, gds_datatype: 0}
+  - {name: M5, gds_layer: 50, gds_datatype: 0}
+  - {name: V0, gds_layer: 18, gds_datatype: 0}
+  - {name: V1, gds_layer: 21, gds_datatype: 0}
+  - {name: V2, gds_layer: 25, gds_datatype: 0}
+  - {name: V3, gds_layer: 35, gds_datatype: 0}
+  - {name: V4, gds_layer: 45, gds_datatype: 0}
+  - {name: V5, gds_layer: 55, gds_datatype: 0}

@@ -1,0 +1,325 @@
+{
+  "rules": [
+    {
+      "id": "FIN.W",
+      "check": "min_width",
+      "layers": [
+        "FIN"
+      ],
+      "value": 0.007
+    },
+    {
+      "id": "FIN.S",
+      "check": "min_space",
+      "layers": [
+        "FIN"
+      ],
+      "value": 0.02
+    },
+    {
+      "id": "FIN.S",
+      "check": "min_notch",
+      "layers": [
+        "FIN"
+      ],
+      "value": 0.02
+    },
+    {
+      "id": "GATE.W",
+      "check": "min_width",
+      "layers": [
+        "GATE"
+      ],
+      "value": 0.02
+    },
+    {
+      "id": "GATE.S",
+      "check": "min_space",
+      "layers": [
+        "GATE"
+      ],
+      "value": 0.034
+    },
+    {
+      "id": "GATE.S",
+      "check": "min_notch",
+      "layers": [
+        "GATE"
+      ],
+      "value": 0.034
+    },
+    {
+      "id": "GCUT.W",
+      "check": "min_width",
+      "layers": [
+        "GCUT"
+      ],
+      "value": 0.017,
+      "params": {
+        "facing": "y"
+      }
+    },
+    {
+      "id": "GCUT.S",
+      "check": "min_space",
+      "layers": [
+        "GCUT"
+      ],
+      "value": 0.035,
+      "params": {
+        "facing": "y"
+      }
+    },
+    {
+      "id": "GCUT.S",
+      "check": "min_notch",
+      "layers": [
+        "GCUT"
+      ],
+      "value": 0.035,
+      "params": {
+        "facing": "y"
+      }
+    },
+    {
+      "id": "ACTIVE.W",
+      "check": "min_width",
+      "layers": [
+        "ACTIVE"
+      ],
+      "value": 0.016
+    },
+    {
+      "id": "ACTIVE.S",
+      "check": "min_space",
+      "layers": [
+        "ACTIVE"
+      ],
+      "value": 0.027
+    },
+    {
+      "id": "ACTIVE.S",
+      "check": "min_notch",
+      "layers": [
+        "ACTIVE"
+      ],
+      "value": 0.027
+    },
+    {
+      "id": "LIG.W",
+      "check": "min_width",
+      "layers": [
+        "LIG"
+      ],
+      "value": 0.016
+    },
+    {
+      "id": "LIG.S",
+      "check": "min_space",
+      "layers": [
+        "LIG"
+      ],
+      "value": 0.019
+    },
+    {
+      "id": "LIG.S",
+      "check": "min_notch",
+      "layers": [
+        "LIG"
+      ],
+      "value": 0.019
+    },
+    {
+      "id": "LISD.W",
+      "check": "min_width",
+      "layers": [
+        "LISD"
+      ],
+      "value": 0.024
+    },
+    {
+      "id": "LISD.S",
+      "check": "min_space",
+      "layers": [
+        "LISD"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "LISD.S",
+      "check": "min_notch",
+      "layers": [
+        "LISD"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "M1.W",
+      "check": "min_width",
+      "layers": [
+        "M1"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "M1.S",
+      "check": "min_space",
+      "layers": [
+        "M1"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "M1.S",
+      "check": "min_notch",
+      "layers": [
+        "M1"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "M2.W",
+      "check": "min_width",
+      "layers": [
+        "M2"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "M2.S",
+      "check": "min_space",
+      "layers": [
+        "M2"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "M2.S",
+      "check": "min_notch",
+      "layers": [
+        "M2"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "M3.W",
+      "check": "min_width",
+      "layers": [
+        "M3"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "M3.S",
+      "check": "min_space",
+      "layers": [
+        "M3"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "M3.S",
+      "check": "min_notch",
+      "layers": [
+        "M3"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "M4.W",
+      "check": "min_width",
+      "layers": [
+        "M4"
+      ],
+      "value": 0.024
+    },
+    {
+      "id": "M4.S",
+      "check": "min_space",
+      "layers": [
+        "M4"
+      ],
+      "value": 0.024
+    },
+    {
+      "id": "M4.S",
+      "check": "min_notch",
+      "layers": [
+        "M4"
+      ],
+      "value": 0.024
+    },
+    {
+      "id": "M5.W",
+      "check": "min_width",
+      "layers": [
+        "M5"
+      ],
+      "value": 0.024
+    },
+    {
+      "id": "M5.S",
+      "check": "min_space",
+      "layers": [
+        "M5"
+      ],
+      "value": 0.024
+    },
+    {
+      "id": "M5.S",
+      "check": "min_notch",
+      "layers": [
+        "M5"
+      ],
+      "value": 0.024
+    },
+    {
+      "id": "V0.W",
+      "check": "min_width",
+      "layers": [
+        "V0"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "V1.W",
+      "check": "min_width",
+      "layers": [
+        "V1"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "V2.W",
+      "check": "min_width",
+      "layers": [
+        "V2"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "V3.W",
+      "check": "min_width",
+      "layers": [
+        "V3"
+      ],
+      "value": 0.018
+    },
+    {
+      "id": "V4.W",
+      "check": "min_width",
+      "layers": [
+        "V4"
+      ],
+      "value": 0.024
+    },
+    {
+      "id": "V5.W",
+      "check": "min_width",
+      "layers": [
+        "V5"
+      ],
+      "value": 0.024
+    }
+  ]
+}

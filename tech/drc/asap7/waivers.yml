@@ -1,0 +1,12 @@
+# DRC markers verify_macro.py reports but does not count against a macro.
+# Same shape as gdscheck's PDK waivers: cell-name globs (`*` matches any run),
+# the rule ids covered (omit for every rule) and why.  A marker is waived only
+# when the public KLayout runset files it under a cell matching `cells`: it
+# came from that cell's own geometry alone, not from anything placed beside it.
+waivers:
+  - cells: ["*_ASAP7_75t_R", "*_ASAP7_75t_L", "*_ASAP7_75t_SL", "*_ASAP7_75t_SRAM"]
+    rules: [V1.S.4, V0.S.1, LIG.SDT.S.8, LIG.LISD.S.7]
+    reason: ASAP7 standard cells as delivered (DFFASRHQNx1, TIEHIx1, TIELOx1 trip these)
+  - cells: ["VIA_VIA56"]
+    rules: [V5.M6.AUX.2]
+    reason: public runset checks M6 (horizontal) with V5's vertical-edge selection; the via is legal
